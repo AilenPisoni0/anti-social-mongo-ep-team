@@ -1,0 +1,370 @@
+{
+	"info": {
+		"_postman_id": "405e632d-ae01-4fd4-b391-40816b6d534d",
+		"name": "Anti-Social Network API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "16085470"
+	},
+	"item": [
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/users"
+					},
+					"response": []
+				},
+				{
+					"name": "Create User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nickName\": \"john_doe_2\",\n    \"email\": \"john2@example.com\"\n}"
+						},
+						"url": "{{base_url}}/users"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/users/2"
+					},
+					"response": []
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"john.updated@example.com\"\n}"
+						},
+						"url": "{{base_url}}/users/1"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": "{{base_url}}/users/1"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Posts",
+			"item": [
+				{
+					"name": "Get All Posts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/posts"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Post",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"description\": \"Mi primer post en la red antisocial!\",\n    \"userId\": 2\n}"
+						},
+						"url": "{{base_url}}/posts"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Post by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/posts/2"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Post",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"description\": \"Post actualizadito\",\n    \"userId\": 3\n}"
+						},
+						"url": "{{base_url}}/posts/2"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Post",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": "{{base_url}}/posts/1"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Post Images",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/posts/2/images"
+					},
+					"response": []
+				},
+				{
+					"name": "Post Post Image",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"url\": \"https://example.com/image.jpg\"\n}"
+						},
+						"url": "{{base_url}}/posts/2/images"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Post Image",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": "{{base_url}}/posts/2/images/3"
+					},
+					"response": []
+				},
+				{
+					"name": "Post Post Tag",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"url\": \"https://example.com/image.jpg\"\n}"
+						},
+						"url": "{{base_url}}/posts/2/tags/3"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Post Tags",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/posts/2/tags"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Post Tag",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": "{{base_url}}/posts/2/tags/3"
+					},
+					"response": []
+				},
+				{
+					"name": "Get all Post Comments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/posts/2/comments"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Comments",
+			"item": [
+				{
+					"name": "Get all Comments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/comments"
+					},
+					"response": []
+				},
+				{
+					"name": "Get comment by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/comments/1"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Comment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"Gran post!\",\n    \"userId\": 2,\n    \"postId\": 2\n}"
+						},
+						"url": "{{base_url}}/comments"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Comment",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"eeexcelente post!\"\n}"
+						},
+						"url": "{{base_url}}/comments/1"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Comment",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": "{{base_url}}/comments/1"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Tags",
+			"item": [
+				{
+					"name": "Get All Tags",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/tags"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Tag",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"gatitos\"\n}"
+						},
+						"url": "{{base_url}}/tags"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Tag by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/tags/1"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Tag",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"lifestyle-actualizadito\"\n}"
+						},
+						"url": "{{base_url}}/tags/2"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Tag",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": "{{base_url}}/tags/1"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000",
+			"type": "string"
+		}
+	]
+}
