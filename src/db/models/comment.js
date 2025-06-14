@@ -1,40 +1,44 @@
-'use strict';
-const {
-  Model
-} = require('sequelize');
-module.exports = (sequelize, DataTypes) => {
-  class Comment extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
-    static associate(models) {
-      Comment.belongsTo(models.User, { foreignKey: 'userId' });
-      Comment.belongsTo(models.Post, { foreignKey: 'postId' });
-    }
-  }
+const mongoose = require('mongoose');
+const CommentSchema = new mongoose.Schema({
+  content: {
+    type: String,
+    required: true
+  },
+  isEdited: {
+    type: Boolean,
+    default: false
+  },
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  postId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Post',
+    required: true
+  },
+}, {
+  timestamps: true 
+});
 
-  Comment.init({
-    content: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    },
-    isEdited: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false
-    },
-    createdAt: DataTypes.DATE,
-    updatedAt: DataTypes.DATE,
-    deletedAt: DataTypes.DATE,
-    userId: DataTypes.INTEGER,
-    postId: DataTypes.INTEGER
-  }, {
-    sequelize,
-    modelName: 'Comment',
-    tableName: 'comments',
-    timestamps: true,
-    paranoid: true,
-  });
-  return Comment;
-};
+
+CommentSchema.set('toJSON', {
+  virtuals: true,
+  transform: (_, ret) => {
+    ret.id = ret._id;
+    delete ret._id;
+    delete ret.__v;
+  }
+});
+
+CommentSchema.set('toObject', {
+  virtuals: true,
+  transform: (_, ret) => {
+    ret.id = ret._id;
+    delete ret._id;
+    delete ret.__v;
+  }
+});
+
+module.exports = mongoose.model('Comment', CommentSchema);

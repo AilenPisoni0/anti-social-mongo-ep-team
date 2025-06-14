@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const UserSchema = new Schema({
+const UserSchema = new mongoose.Schema({
   nickName: {
     type: String,
     required: true,
@@ -49,3 +49,5 @@ UserSchema.set('toObject', {
     delete ret.__v;
   }
 });
+
+module.exports = mongoose.model('User', UserSchemaSchema);
