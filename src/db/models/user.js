@@ -1,48 +1,51 @@
-'use strict';
-const {
-  Model
-} = require('sequelize');
-module.exports = (sequelize, DataTypes) => {
-  class User extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
-    static associate(models) {
-      User.hasMany(models.Post, { foreignKey: 'userId', hooks: true })
-      User.hasMany(models.Comment, { foreignKey: 'userId', hooks: true })
-    }
+const mongoose = require('mongoose');
+
+const UserSchema = new Schema({
+  nickName: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    match: /.+\@.+\..+/ 
+  },
+  isEdited: {
+    type: Boolean,
+    default: false
   }
+}, {
+  timestamps: true, //esto crea el CreateAt y EditedAt automáticamente
+});
 
-  User.init({
-    nickName: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true
-    },
-    email: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-      validate: {
-        isEmail: true
-      }
-    },
-    isEdited: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false
-    },
-    createdAt: DataTypes.DATE,
-    updatedAt: DataTypes.DATE,
-    deletedAt: DataTypes.DATE
-  }, {
-    sequelize,
-    modelName: 'User',
-    tableName: 'users',
-    timestamps: true,
-    paranoid: true
-  });
+UserSchema.virtual('posts', {
+  ref: 'Post',
+  localField: '_id',
+  foreignField: 'userId'
+});
 
-  return User;
-};
+UserSchema.virtual('comments', {
+  ref: 'Comment',
+  localField: '_id',
+  foreignField: 'userId'
+});
+
+//Esto incluye los virtuals, renombra _id a id (solo en las res) y elimina el campo __v
+UserSchema.set('toJSON', {
+  virtuals: true,
+  transform: (_, ret) => {
+    ret.id = ret._id;
+    delete ret._id;
+    delete ret.__v;
+  }
+});
+UserSchema.set('toObject', {
+  virtuals: true,
+  transform: (_, ret) => {
+    ret.id = ret._id;
+    delete ret._id;
+    delete ret.__v;
+  }
+});
