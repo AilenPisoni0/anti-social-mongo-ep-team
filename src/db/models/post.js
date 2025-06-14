@@ -1,47 +1,50 @@
-'use strict';
-const {
-  Model
-} = require('sequelize');
-module.exports = (sequelize, DataTypes) => {
-  class Post extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
-    static associate(models) {
-      Post.belongsTo(models.User, {
-        foreignKey: 'userId'
-      })
-      Post.hasMany(models.Comment, { foreignKey: 'postId', hooks: true })
-      Post.hasMany(models.PostImage, { foreignKey: 'postId', hooks: true });
-      Post.belongsToMany(models.Tag, {
-        through: models.PostTag,
-        foreignKey: 'postId',
-        otherKey: 'tagId'
-      });
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+
+const postSchema = new Schema({
+  
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User', 
+    required: true 
+  },
+  
+ 
+  description: {
+    type: String,
+    required: true,
+    trim: true 
+  },
+  
+  images: [{
+    url: { // URL de la imagen (ej. /uploads/nombre_archivo.jpg)
+      type: String,
+      required: true,
+      trim: true
+    },
+    description: { // Descripción opcional de la imagen
+      type: String,
+      trim: true
+    },
+    uploadedAt: { // Fecha/hora de subida de la imagen
+      type: Date,
+      default: Date.now
     }
+  }],
+  
+  
+  tags: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Tag' // El nombre del modelo al que hace referencia
+  }]
+}, {
+  
+  timestamps: true, 
+});
 
-  }
-  Post.init({
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    },
-    isEdited: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false
-    },
-    createdAt: DataTypes.DATE,
-    updatedAt: DataTypes.DATE,
-    deletedAt: DataTypes.DATE
-  }, {
-    sequelize,
-    modelName: 'Post',
-    tableName: 'posts',
-    timestamps: true,
-    paranoid: true
-  });
+// - Buscar posts de un usuario específico, ordenados por fecha de creación descendente.
+postSchema.index({ userId: 1, createdAt: -1 });
+// - Buscar posts que contengan una etiqueta específica.
+postSchema.index({ tags: 1 });
 
-  return Post;
-};
+module.exports = mongoose.model('Post', postSchema);

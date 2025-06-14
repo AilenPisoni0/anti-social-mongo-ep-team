@@ -1,41 +1,20 @@
-'use strict';
-const {
-  Model
-} = require('sequelize');
-module.exports = (sequelize, DataTypes) => {
-  class Tag extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
-    static associate(models) {
-      Tag.belongsToMany(models.Post, {
-        through: models.PostTag,
-        foreignKey: 'tagId',
-        otherKey: 'postId'
-      })
-    }
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+
+const tagSchema = new Schema({
+  name: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true, 
+    lowercase: true 
   }
-  Tag.init({
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true
-    },
-    isEdited: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false
-    },
-    createdAt: DataTypes.DATE,
-    updatedAt: DataTypes.DATE,
-    deletedAt: DataTypes.DATE
-  }, {
-    sequelize,
-    modelName: 'Tag',
-    tableName: 'tags',
-    timestamps: true,
-    paranoid: true,
-  });
-  return Tag;
-};
+}, {
+  
+  timestamps: true 
+});
+
+// Índice para mejorar el rendimiento de las consultas por nombre de etiqueta.
+tagSchema.index({ name: 1 });
+
+module.exports = mongoose.model('Tag', tagSchema);
