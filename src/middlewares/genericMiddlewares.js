@@ -1,17 +1,17 @@
 
 
 const validateId =  (req,res,next)=>{
-    const id = req.params.id;
-    if(id<=0){
-        res.status(400).json({message:`El id no puede ser un número negativo`})
-    }
+   const id = req.params.id;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: `El id ${id} no es un ObjectId válido` });
+  }
     next()
 }
 
 const existModelById = (modelo) => {
   return async (req, res, next) => {
     const id = req.params.id;
-    const data = await modelo.findByPk(id);
+    const data = await modelo.findById(id);
     if (!data) {
       return res
         .status(404)
@@ -24,7 +24,7 @@ const existModelById = (modelo) => {
 const existModelByUserIdInBody = (modelo) => {
   return async (req, res, next) => {
     const id = req.body.userId;
-    const data = await modelo.findByPk(id);
+    const data = await modelo.findById(id);
     if (!data) {
       return res
         .status(404)

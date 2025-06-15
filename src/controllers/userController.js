@@ -1,33 +1,31 @@
-const { User, Post, Comment } = require('../db/models');
-
+const User= require('../db/models/user');
+const  Post =require('../db/models/post');
+const Comment =require('../db/models/comment');
 module.exports = {
   // Crear un nuevo usuario
-  createUser: async (req, res) => {
-    try {
-      const { nickName, email } = req.body;
+ createUser: async (req, res) => {
+  try {
+    const { nickName, email } = req.body;
 
-      const newUser = await User.create({
-        nickName,
-        email,
-        isDeleted: false,
-        isEdited: false
-      });
+    const newUser = new User({
+      nickName,
+      email,
+      isEdited: false
+    });
 
-      res.status(201).json(newUser);
-    } catch (err) {
-      if (err.name === 'SequelizeUniqueConstraintError') {
-        return res.status(400).json({ error: 'El nickName o email ya existe' });
-      }
-      res.status(500).json({ error: 'No se pudo crear el usuario' });
-    }
-  },
+    await newUser.save();
+
+    res.status(201).json(newUser);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'No se pudo crear el usuario' });
+  }
+},
 
   // Obtener todos los usuarios
   getAllUsers: async (req, res) => {
     try {
-      const users = await User.findAll({
-        attributes: ['id', 'nickName', 'email', 'createdAt']
-      });
+     const users = await User.find({}, 'nickName email createdAt').lean()
       res.status(200).json(users);
     } catch (err) {
       res.status(500).json({ error: 'No se pudieron obtener los usuarios' });

@@ -1,7 +1,7 @@
 console.log("UnaHur - Anti-Social net");
 const express = require('express')
-const db = require('./db/models')
 const app = express()
+const conectarDB=  require('./db/config/config')
 const { userRoute, commentRoute, tagRoute, postRoute } = require("./routes");
 const { specs, swaggerUi } = require('./docs/swagger');
 
@@ -20,9 +20,8 @@ app.use("/posts", postRoute);
 app.use('/tags', tagRoute);
 app.use("/comments", commentRoute);
 
+conectarDB()
+
 app.listen(PORT, async () => {
     console.log(`Aplicación corriendo exitosamente en el puerto ${PORT}`)
-    /*
-    Recomendado su uso para mysql
-    await db.sequelize.sync({force:true})*/
 })

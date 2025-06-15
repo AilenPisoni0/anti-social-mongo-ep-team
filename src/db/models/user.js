@@ -50,4 +50,4 @@ UserSchema.set('toObject', {
   }
 });
 
-module.exports = mongoose.model('User', UserSchemaSchema);
+module.exports = mongoose.model('User', UserSchema);
