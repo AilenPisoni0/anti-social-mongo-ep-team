@@ -4,7 +4,10 @@ const postController = require('../controllers/postController');
 const commentController = require('../controllers/commentController');
 const { genericMiddleware, postImageMiddleware, tagMiddleware, userMiddleware } = require("../middlewares");
 const { createPostSchema, updatePostSchema } = require("../schemas");
-const { Post, Tag, User } = require("../db/models");
+const Post = require("../db/models/post");
+const Tag = require("../db/models/tag");
+const User = require("../db/models/user");
+
 
 router.get('/', postController.getAllPosts);
 
