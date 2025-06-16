@@ -1,7 +1,7 @@
 const Joi = require('joi');
 
 const createPostImageSchema = Joi.object({
-  postId: Joi.number().integer().min(1).required().messages({
+    postId: Joi.string().length(24).hex().required().messages({ //
     "any.required": "El ID del post es obligatorio",
     "number.min": "El ID del post debe ser un número positivo"
   }),

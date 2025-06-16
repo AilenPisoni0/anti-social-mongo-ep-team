@@ -1,36 +1,40 @@
 const Joi = require("joi");
 
-const TagSchema = Joi.object({
-  name: Joi.string()
-    .required()
-    .min(2)
-    .max(30)
-    .pattern(/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s_-]+$/)
-    .messages({
-      "any.required": "El nombre del tag es obligatorio",
-      "string.min": "El nombre del tag debe tener al menos {#limit} caracteres",
-      "string.max": "El nombre del tag no puede tener más de {#limit} caracteres",
-      "string.empty": "El nombre del tag no puede estar vacío",
-      "string.pattern.base": "El nombre del tag solo puede contener letras, números, espacios, guiones y guiones bajos"
-    })
+const UserSchema = Joi.object({
+    nickName: Joi.string().required().min(4).max(12).pattern(/^[a-zA-Z0-9_]+$/).messages({
+                "any.required": "nickName es obligatorio",
+                "string.min": "nickName debe tener como mínimo {#limit} carácteres",
+                "string.max": "nickName debe tener como máximo {#limit} carácteres",
+                "string.empty": "nicknName no puede estar vacío",
+                "string.pattern.base": "El nickName solo puede contener letras, números y guiones bajos"
+            }),
+
+    email: Joi.string().required().email().messages({
+                "any.required": "email es obligatorio",
+                "string.empty": "email no puede estar vacío",
+                "string.email": "El formato del email no es válido"
+            })
 });
 
-const UpdateTagSchema = Joi.object({
-  name: Joi.string()
-    .min(2)
-    .max(30)
-    .pattern(/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s_-]+$/)
-    .messages({
-      "string.min": "El nombre del tag debe tener al menos {#limit} caracteres",
-      "string.max": "El nombre del tag no puede tener más de {#limit} caracteres",
-      "string.empty": "El nombre del tag no puede estar vacío",
-      "string.pattern.base": "El nombre del tag solo puede contener letras, números, espacios, guiones y guiones bajos"
-    }),
-  isDeleted: Joi.boolean().optional(),
-  isEdited: Joi.boolean().optional()
-});
+const UpdateUserSchema = Joi.object({
+    nickName: Joi.string()
+        .min(4)
+        .max(12)
+        .pattern(/^[a-zA-Z0-9_]+$/)
+        .messages({
+            "string.min": "El nickName debe tener como mínimo {#limit} caracteres",
+            "string.max": "El nickName debe tener como máximo {#limit} caracteres",
+            "string.empty": "El nickName no puede estar vacío",
+            "string.pattern.base": "El nickName solo puede contener letras, números y guiones bajos"
+        }),
+    email: Joi.string()
+        .email()
+        .messages({
+            "string.empty": "El email no puede estar vacío",
+            "string.email": "El formato del email no es válido"
+        }),
+    isDeleted: Joi.boolean().optional(),
+    isEdited: Joi.boolean().optional()
+}).min(1); // Añadido .min(1) para asegurar que al menos un campo se esté actualizando
 
-module.exports = {
-  TagSchema,
-  UpdateTagSchema
-};
+module.exports = { UserSchema, UpdateUserSchema }; // ¡CORREGIDO! Exportar ambos esquemas
