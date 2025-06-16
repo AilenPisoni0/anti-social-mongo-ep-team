@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const User = require('../db/models/user');
+const Comment = require ('../db/models/comment');
 
 const validateId =  (req,res,next)=>{
    const id = req.params.id;
@@ -38,7 +40,7 @@ const existModelByUserIdInBody = (modelo) => {
 const existModelByPostIdInBody = (modelo) => {
   return async (req, res, next) => {
     const id = req.body.postId;
-    const data = await modelo.findByPk(id);
+    const data = await modelo.findById(id);
     if (!data) {
       return res
         .status(404)

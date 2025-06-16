@@ -1,13 +1,15 @@
 const Joi = require("joi");
 
 const CommentSchema = Joi.object({
-    postId: Joi.number().required().min(1).messages({
-        "any.required": "El ID del post es obligatorio",
-        "number.min": "El ID del post debe ser un número positivo"
+    postId: Joi.string().length(24).hex().required().messages({
+      "any.required": "El ID del usuario es obligatorio",
+      "string.length": "El ID del usuario debe tener 24 caracteres",
+      "string.hex": "El ID del usuario debe ser un hexadecimal válido"
     }),
-    userId: Joi.number().required().min(1).messages({
-        "any.required": "El ID del usuario es obligatorio",
-        "number.min": "El ID del usuario debe ser un número positivo"
+    userId: Joi.string().length(24).hex().required().messages({
+      "any.required": "El ID del usuario es obligatorio",
+      "string.length": "El ID del usuario debe tener 24 caracteres",
+      "string.hex": "El ID del usuario debe ser un hexadecimal válido"
     }),
     content: Joi.string().required().min(1).max(280)
         .pattern(/^.*$/).messages({
