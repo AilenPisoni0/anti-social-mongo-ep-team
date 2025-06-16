@@ -1,4 +1,4 @@
-const { Post } = require('../db/models');
+const  Post  = require('../db/models/post');
 
 const validatePostExists = async (req, res, next) => {
     try {
@@ -8,7 +8,7 @@ const validatePostExists = async (req, res, next) => {
             return res.status(400).json({ error: 'Se requiere el ID del post' });
         }
 
-        const post = await Post.findByPk(postId);
+        const post = await Post.findById(postId);
         if (!post) {
             return res.status(404).json({ error: 'Post no encontrado' });
         }

@@ -7,9 +7,10 @@ const createPostSchema = Joi.object({
     "string.min": "La descripción del post debe tener al menos {#limit} carácter",
     "string.max": "La descripción del post no puede superar los {#limit} caracteres"
   }),
-  userId: Joi.number().integer().min(1).required().messages({
+  userId: Joi.string().length(24).hex().required().messages({
     "any.required": "El ID del usuario es obligatorio",
-    "number.min": "El ID del usuario debe ser un número positivo"
+    "string.length": "El ID del usuario debe tener 24 caracteres",
+    "string.hex": "El ID del usuario debe ser un hexadecimal válido"
   }),
   tags: Joi.array().items(
     Joi.number().integer().min(1)
@@ -25,9 +26,10 @@ const updatePostSchema = Joi.object({
     "string.min": "La descripción del post debe tener al menos {#limit} carácter",
     "string.max": "La descripción del post no puede superar los {#limit} caracteres",
   }),
-  userId: Joi.number().integer().min(1).optional().messages({
+  userId: Joi.string().length(24).hex().required().messages({
     "any.required": "El ID del usuario es obligatorio",
-    "number.min": "El ID del usuario debe ser un número positivo"
+    "string.length": "El ID del usuario debe tener 24 caracteres",
+    "string.hex": "El ID del usuario debe ser un hexadecimal válido"
   }),
   isEdited: Joi.boolean().optional(),
   isDeleted: Joi.boolean().optional()

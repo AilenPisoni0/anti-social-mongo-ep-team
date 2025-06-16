@@ -47,4 +47,13 @@ postSchema.index({ userId: 1, createdAt: -1 });
 // - Buscar posts que contengan una etiqueta específica.
 postSchema.index({ tags: 1 });
 
+postSchema.virtual('comments', {
+  ref: 'Comment',
+  localField: '_id',
+  foreignField: 'postId' 
+});
+
+postSchema.set('toJSON', { virtuals: true });
+postSchema.set('toObject', { virtuals: true });
+
 module.exports = mongoose.model('Post', postSchema);

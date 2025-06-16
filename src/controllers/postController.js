@@ -1,60 +1,52 @@
 // src/controllers/postController.js
-const { Post, PostImage, Tag, PostTag, Comment, User } = require('../db/models');
-const { Op } = require('sequelize');
+const mongoose = require('mongoose');
+const  Post = require('../db/models/post');
+const Tag = require('../db/models/tag');
+const Comment= require('../db/models/comment');
+const  User  = require('../db/models/user');
+
 
 module.exports = {
   // Crear un nuevo post
   createPost: async (req, res) => {
-    try {
-      const { description, userId } = req.body;
-      const newPost = await Post.create({
-        description,
-        userId,
-        isDeleted: false,
-        isEdited: false
-      });
-      res.status(201).json(newPost);
-    } catch (err) {
-      res.status(500).json({ error: 'No se pudo crear el post' });
-    }
-  },
+  try {
+    const { description, userId, images, tags } = req.body;
 
+    const newPost = new Post({
+      description,
+      userId,
+      images: images || [],
+      tags: tags || [],
+      isDeleted: false,
+      isEdited: false
+    });
+
+    await newPost.save();
+
+    res.status(201).json(newPost);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'No se pudo crear el post' });
+  }
+},
   // Obtener todos los posts
- getAllPosts: async (req, res) => {
+ getAllPosts : async (req, res) => {
   try {
     const maxAgeMonths = parseInt(process.env.MAX_COMMENT_AGE_MONTHS) || 6;
     const cutoffDate = new Date();
     cutoffDate.setMonth(cutoffDate.getMonth() - maxAgeMonths);
 
-    const posts = await Post.findAll({
-      include: [
-        {
-          model: PostImage,
-          attributes: ['id', 'url', 'isEdited', 'createdAt']
-        },
-        {
-          model: Tag,
-          attributes: ['id', 'name'],
-          through: { attributes: [] }
-        },
-        {
-          model: Comment,
-          required: false,
-          where: {
-            createdAt: {
-              [Op.gte]: cutoffDate
-            }
-          },
-          include: [
-            {
-              model: User,
-              attributes: ['nickName']
-            }
-          ]
+    const posts = await Post.find()
+      .populate('tags', 'id name')  // trae solo id y name de tags
+      .populate({
+        path: 'comments',
+        match: { createdAt: { $gte: cutoffDate } }, // filtra comentarios por fecha
+        populate: {
+          path: 'userId',
+          select: 'nickName'  // solo nickname del usuario
         }
-      ],
-      order: [['createdAt', 'DESC']]
-    });
+      })
+      .sort({ createdAt: -1 });
 
     if (posts.length === 0) {
       return res.status(204).json({ message: 'No hay contenido' });
@@ -75,40 +67,23 @@ getPostById: async (req, res) => {
     const cutoffDate = new Date();
     cutoffDate.setMonth(cutoffDate.getMonth() - maxAgeMonths);
 
-    const postWithDetails = await Post.findByPk(req.params.id, {
-      include: [
-        {
-          model: PostImage,
-          attributes: ['id', 'url', 'isEdited', 'createdAt']
-        },
-        {
-          model: Tag,
-          attributes: ['id', 'name'],
-          through: { attributes: [] }
-        },
-        {
-          model: Comment,
-          required: false,
-          where: {
-            createdAt: {
-              [Op.gte]: cutoffDate
-            }
-          },
-          include: [
-            {
-              model: User,
-              attributes: ['nickName']
-            }
-          ]
+    const post = await Post.findById(req.params.id)
+      .populate('tags', 'name')   
+      .populate({
+        path: 'comments',
+        match: { createdAt: { $gte: cutoffDate } },  
+        populate: {
+          path: 'userId',
+          select: 'nickName'        
         }
-      ]
-    });
+      })
+      .lean();
 
-    if (!postWithDetails) {
+    if (!post) {
       return res.status(404).json({ message: 'Post no encontrado' });
     }
 
-    res.status(200).json(postWithDetails);
+    res.status(200).json(post);
   } catch (err) {
     console.error('Error en getPostById:', err);
     res.status(500).json({ error: 'No se pudo obtener el post' });
@@ -120,15 +95,12 @@ getPostById: async (req, res) => {
   updatePost: async (req, res) => {
     try {
       const { description, userId } = req.body;
-      
-      const post = await Post.findByPk(req.params.id);
-
-      await post.update({
-        description,
-        userId,
-        isEdited: true
-      });
-
+      const post = await Post.findById(req.params.id);
+  
+      post.description = description ?? post.description;
+      post.userId = userId ?? post.userId;
+      post.isEdited = true;
+      await post.save();
       res.status(200).json(post);
     } catch (err) {
       res.status(500).json({ error: 'No se pudo actualizar el post' });
@@ -136,16 +108,18 @@ getPostById: async (req, res) => {
   },
 
   // Eliminar un post
-  deletePost: async (req, res) => {
-    try {
-      const post = await Post.findByPk(req.params.id);
-      await post.destroy();
-      res.status(204).send();
-    } catch (err) {
-      res.status(500).json({ error: 'No se pudo eliminar el post' });
+deletePost: async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ error: 'Post no encontrado' });
     }
-  },
-
+    await post.deleteOne(); 
+    res.status(204).send();
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo eliminar el post' });
+  }
+},
   addImageFromPost: async (req, res) => {
     try {
       const post = await Post.findByPk(req.params.id);

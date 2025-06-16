@@ -8,16 +8,16 @@ const Post = require("../db/models/post");
 const Tag = require("../db/models/tag");
 const User = require("../db/models/user");
 
-
+//OK
 router.get('/', postController.getAllPosts);
-
+//OK
 router.post('/',
     genericMiddleware.schemaValidator(createPostSchema),
     postController.createPost
 );
-
+//OK
 router.get('/:id', postController.getPostById);
-
+//OK
 router.put('/:id',
     genericMiddleware.validateId,
     genericMiddleware.existModelById(Post),
@@ -25,7 +25,7 @@ router.put('/:id',
     userMiddleware.existUserModelById(User),
     postController.updatePost
 );
-
+//OK
 router.delete('/:id',
     genericMiddleware.validateId,
     genericMiddleware.existModelById(Post),
