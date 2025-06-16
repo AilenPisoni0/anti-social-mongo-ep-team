@@ -1,3 +1,5 @@
+/* borrar
+
 require('dotenv').config();
 const mongoose = require('mongoose');
 
@@ -35,3 +37,5 @@ module.exports= conectarDB
 //     dialect: process.env.DB_DIALECT
 //   }
 // };
+
+*/

@@ -14,6 +14,10 @@ app.use(express.json());
 // Documentación Swagger
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
+app.use(express.urlencoded({ extended: true })); // Para parsear cuerpos de solicitud codificados en URL
+// --- Servir archivos estáticos (imágenes subidas) ---
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Rutas
 app.use("/users", userRoute);
 app.use("/posts", postRoute);
