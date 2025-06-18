@@ -67,9 +67,11 @@ module.exports = {
     const comments = await Comment.find()
       .populate({
         path: 'userId',
-        select: 'nickName' // solo traemos el nickName del usuario
+
+        select: 'nickName' 
       })
-      .sort({ createdAt: -1 }); // orden descendente por fecha
+      
+      .sort({ createdAt: -1 });
 
     if (comments.length === 0) {
       return res.status(204).json({ message: 'No hay comentarios para mostrar' });

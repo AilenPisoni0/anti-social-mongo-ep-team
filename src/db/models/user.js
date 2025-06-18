@@ -32,7 +32,7 @@ UserSchema.virtual('comments', {
   foreignField: 'userId'
 });
 
-//Esto incluye los virtuals, renombra _id a id (solo en las res) y elimina el campo __v
+
 UserSchema.set('toJSON', {
   virtuals: true,
   transform: (_, ret) => {

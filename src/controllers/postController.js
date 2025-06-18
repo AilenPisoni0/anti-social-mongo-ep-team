@@ -1,94 +1,94 @@
 // src/controllers/postController.js
 const mongoose = require('mongoose');
-const  Post = require('../db/models/post');
+const Post = require('../db/models/post');
 const Tag = require('../db/models/tag');
-const Comment= require('../db/models/comment');
-const  User  = require('../db/models/user');
+const Comment = require('../db/models/comment');
+const User = require('../db/models/user');
 
 
 module.exports = {
   // Crear un nuevo post
   createPost: async (req, res) => {
-  try {
-    const { description, userId, images, tags } = req.body;
+    try {
+      const { description, userId, images, tags } = req.body;
 
-    const newPost = new Post({
-      description,
-      userId,
-      images: images || [],
-      tags: tags || [],
-      isDeleted: false,
-      isEdited: false
-    });
+      const newPost = new Post({
+        description,
+        userId,
+        images: images || [],
+        tags: tags || [],
+        isDeleted: false,
+        isEdited: false
+      });
 
-    await newPost.save();
+      await newPost.save();
 
-    res.status(201).json(newPost);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'No se pudo crear el post' });
-  }
-},
-  // Obtener todos los posts
- getAllPosts : async (req, res) => {
-  try {
-    const maxAgeMonths = parseInt(process.env.MAX_COMMENT_AGE_MONTHS) || 6;
-    const cutoffDate = new Date();
-    cutoffDate.setMonth(cutoffDate.getMonth() - maxAgeMonths);
-
-    const posts = await Post.find()
-      .populate('tags', 'id name')  // trae solo id y name de tags
-      .populate({
-        path: 'comments',
-        match: { createdAt: { $gte: cutoffDate } }, // filtra comentarios por fecha
-        populate: {
-          path: 'userId',
-          select: 'nickName'  // solo nickname del usuario
-        }
-      })
-      .sort({ createdAt: -1 });
-
-    if (posts.length === 0) {
-      return res.status(204).json({ message: 'No hay contenido' });
+      res.status(201).json(newPost);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'No se pudo crear el post' });
     }
+  },
+  // Obtener todos los posts
+  getAllPosts: async (req, res) => {
+    try {
+      const maxAgeMonths = parseInt(process.env.MAX_COMMENT_AGE_MONTHS) || 6;
+      const cutoffDate = new Date();
+      cutoffDate.setMonth(cutoffDate.getMonth() - maxAgeMonths);
 
-    res.status(200).json(posts);
-  } catch (err) {
-    console.error("Error en getAllPosts:", err);
-    res.status(500).json({ error: 'No se pudieron obtener los posts' });
-  }
-},
+      const posts = await Post.find()
+        .populate('tags', 'id name')  
+        .populate({
+          path: 'comments',
+          match: { createdAt: { $gte: cutoffDate } }, 
+          populate: {
+            path: 'userId',
+            select: 'nickName'  
+          }
+        })
+        .sort({ createdAt: -1 });
+
+      if (posts.length === 0) {
+        return res.status(204).json({ message: 'No hay contenido' });
+      }
+
+      res.status(200).json(posts);
+    } catch (err) {
+      console.error("Error en getAllPosts:", err);
+      res.status(500).json({ error: 'No se pudieron obtener los posts' });
+    }
+  },
 
   // Obtener un post por ID
-  
-getPostById: async (req, res) => {
-  try {
-    const maxAgeMonths = parseInt(process.env.MAX_COMMENT_AGE_MONTHS) || 6;
-    const cutoffDate = new Date();
-    cutoffDate.setMonth(cutoffDate.getMonth() - maxAgeMonths);
 
-    const post = await Post.findById(req.params.id)
-      .populate('tags', 'name')   
-      .populate({
-        path: 'comments',
-        match: { createdAt: { $gte: cutoffDate } },  
-        populate: {
-          path: 'userId',
-          select: 'nickName'        
-        }
-      })
-      .lean();
+  getPostById: async (req, res) => {
+    try {
+      const maxAgeMonths = parseInt(process.env.MAX_COMMENT_AGE_MONTHS) || 6;
+      const cutoffDate = new Date();
+      cutoffDate.setMonth(cutoffDate.getMonth() - maxAgeMonths);
 
-    if (!post) {
-      return res.status(404).json({ message: 'Post no encontrado' });
+      const post = await Post.findById(req.params.id)
+        .populate('tags', 'name')
+        .populate({
+          path: 'comments',
+          match: { createdAt: { $gte: cutoffDate } },
+          populate: {
+            path: 'userId',
+            select: 'nickName'
+          }
+        })
+        .lean();
+
+      if (!post) {
+        return res.status(404).json({ message: 'Post no encontrado' });
+      }
+
+      res.status(200).json(post);
+    } catch (err) {
+      console.error('Error en getPostById:', err);
+      res.status(500).json({ error: 'No se pudo obtener el post' });
     }
-
-    res.status(200).json(post);
-  } catch (err) {
-    console.error('Error en getPostById:', err);
-    res.status(500).json({ error: 'No se pudo obtener el post' });
-  }
-},
+  },
 
 
   // Actualizar un post
@@ -96,7 +96,7 @@ getPostById: async (req, res) => {
     try {
       const { description, userId } = req.body;
       const post = await Post.findById(req.params.id);
-  
+
       post.description = description ?? post.description;
       post.userId = userId ?? post.userId;
       post.isEdited = true;
@@ -108,18 +108,18 @@ getPostById: async (req, res) => {
   },
 
   // Eliminar un post
-deletePost: async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id);
-    if (!post) {
-      return res.status(404).json({ error: 'Post no encontrado' });
+  deletePost: async (req, res) => {
+    try {
+      const post = await Post.findById(req.params.id);
+      if (!post) {
+        return res.status(404).json({ error: 'Post no encontrado' });
+      }
+      await post.deleteOne();
+      res.status(204).send();
+    } catch (err) {
+      res.status(500).json({ error: 'No se pudo eliminar el post' });
     }
-    await post.deleteOne(); 
-    res.status(204).send();
-  } catch (err) {
-    res.status(500).json({ error: 'No se pudo eliminar el post' });
-  }
-},
+  },
   addImageFromPost: async (req, res) => {
     try {
       const post = await Post.findByPk(req.params.id);
@@ -152,8 +152,7 @@ deletePost: async (req, res) => {
   addTagFromPost: async (req, res) => {
     try {
       const { id, tagId } = req.params;
-
-      // Verificar que no exista ya la asociación
+      
       const existingAssociation = await PostTag.findOne({
         where: { postId: id, tagId }
       });

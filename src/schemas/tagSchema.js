@@ -2,19 +2,19 @@ const Joi = require("joi");
 
 const UserSchema = Joi.object({
     nickName: Joi.string().required().min(4).max(12).pattern(/^[a-zA-Z0-9_]+$/).messages({
-                "any.required": "nickName es obligatorio",
-                "string.min": "nickName debe tener como mínimo {#limit} carácteres",
-                "string.max": "nickName debe tener como máximo {#limit} carácteres",
-                "string.empty": "nicknName no puede estar vacío",
-                "string.pattern.base": "El nickName solo puede contener letras, números y guiones bajos"
-            }),
+            "any.required": "nickName es obligatorio",
+            "string.min": "nickName debe tener como mínimo {#limit} carácteres",
+            "string.max": "nickName debe tener como máximo {#limit} carácteres",
+            "string.empty": "nicknName no puede estar vacío",
+            "string.pattern.base": "El nickName solo puede contener letras, números y guiones bajos"
+        }),
 
     email: Joi.string().required().email().messages({
-                "any.required": "email es obligatorio",
-                "string.empty": "email no puede estar vacío",
-                "string.email": "El formato del email no es válido"
-            })
-});
+        "any.required": "email es obligatorio",
+        "string.empty": "email no puede estar vacío",
+        "string.email": "El formato del email no es válido"
+    })
+})
 
 const UpdateUserSchema = Joi.object({
     nickName: Joi.string()
@@ -35,6 +35,7 @@ const UpdateUserSchema = Joi.object({
         }),
     isDeleted: Joi.boolean().optional(),
     isEdited: Joi.boolean().optional()
-}).min(1); // Añadido .min(1) para asegurar que al menos un campo se esté actualizando
+});
 
-module.exports = { UserSchema, UpdateUserSchema }; // ¡CORREGIDO! Exportar ambos esquemas
+
+module.exports = { UserSchema }

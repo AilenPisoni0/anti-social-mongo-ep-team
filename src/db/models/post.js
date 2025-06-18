@@ -17,16 +17,19 @@ const postSchema = new Schema({
   },
   
   images: [{
-    url: { // URL de la imagen (ej. /uploads/nombre_archivo.jpg)
+
+    url: { 
       type: String,
       required: true,
       trim: true
     },
-    description: { // Descripción opcional de la imagen
+
+    description: {
       type: String,
       trim: true
     },
-    uploadedAt: { // Fecha/hora de subida de la imagen
+
+    uploadedAt: { 
       type: Date,
       default: Date.now
     }
@@ -35,7 +38,8 @@ const postSchema = new Schema({
   
   tags: [{
     type: Schema.Types.ObjectId,
-    ref: 'Tag' // El nombre del modelo al que hace referencia
+    
+    ref: 'Tag' 
   }]
 }, {
   
@@ -44,6 +48,7 @@ const postSchema = new Schema({
 
 // - Buscar posts de un usuario específico, ordenados por fecha de creación descendente.
 postSchema.index({ userId: 1, createdAt: -1 });
+
 // - Buscar posts que contengan una etiqueta específica.
 postSchema.index({ tags: 1 });
 

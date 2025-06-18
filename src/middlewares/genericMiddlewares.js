@@ -53,16 +53,20 @@ const existModelByPostIdInBody = (modelo) => {
 
 
 const schemaValidator = (schema) => {
-    return (req, res, next) => {  
-    const { error, _ } = schema.validate(req.body, { abortEarly: false });
-    if (error) {
-      const errores = error.details.map((e) => {
-        return { atribulo: e.path[0], mensaje: e.message};
-      });
-      return res.status(400).json({ errores });
-    }
-    next();
-  };
+    return (req, res, next) => {
+        console.log("schemaValidator: req.body recibido:", req.body); // <-- ESTE LOG
+        const { error, _ } = schema.validate(req.body, { abortEarly: false });
+
+        if (error) {
+            console.log("schemaValidator: Error de Joi detectado:", error); // <-- Y ESTE LOG
+            const errores = error.details.map((e) => {
+                return { atribulo: e.path[0], mensaje: e.message};
+            });
+            console.log("schemaValidator: Errores mapeados para la respuesta:", errores); // <-- Y ESTE LOG
+            return res.status(400).json({ errores });
+        }
+        next();
+    };
 };
 
 

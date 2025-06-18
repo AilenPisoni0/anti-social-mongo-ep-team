@@ -1,12 +1,14 @@
 // src/middlewares/tagMiddlewares.js
-const Tag = require("../db/models/tag"); // Importar Tag directamente
-const Post = require("../db/models/post"); // Necesario para verificar tags en posts
+const Tag = require("../db/models/tag");
 
-const existTagModelById = (modelo) => { // 'modelo' debería ser Tag
+const Post = require("../db/models/post");
+
+const existTagModelById = (modelo) => {
+
   return async (req, res, next) => {
     const tagId = req.params.tagId;
     try {
-      // Sequelize: modelo.findByPk -> Mongoose: modelo.findById
+
       const data = await modelo.findById(tagId);
       if (!data) {
         return res
@@ -16,7 +18,7 @@ const existTagModelById = (modelo) => { // 'modelo' debería ser Tag
       next();
     } catch (err) {
       console.error(err);
-      // Si el ID del tag no es un ObjectId válido de Mongoose, puede lanzar un error de tipo
+      
       if (err.name === 'CastError') {
          return res.status(400).json({ message: `ID de tag ${tagId} no es válido` });
       }
@@ -31,8 +33,8 @@ const existTagByName = () => {
     console.log(name);
     if (name) {
       try {
-        // Sequelize: Tag.findOne({ where: { name } }) -> Mongoose: Tag.findOne({ name })
-        const tag = await Tag.findOne({ name: name.toLowerCase() }); // Busca por nombre en minúsculas
+
+        const tag = await Tag.findOne({ name: name.toLowerCase() }); // busca por nombre en minúsculas
         if (tag) {
           return res.status(400).json({
             message: `Ya existe un tag con el nombre ${name}`
@@ -49,15 +51,16 @@ const existTagByName = () => {
 
 const existTagInPost = () => {
   return async (req, res, next) => {
-    const { id: postId, tagId } = req.params; // id es postId, tagId es el _id del tag
+    
+    const { id: postId, tagId } = req.params;
     try {
-      // Sequelize: PostTag.findOne -> Mongoose: Buscar el tagId en el array 'tags' del Post
+
       const post = await Post.findById(postId);
       if (!post) {
         return res.status(404).json({ error: 'Post no encontrado para verificar el tag' });
       }
 
-      // Verifica si el tagId existe en el array 'tags' del post
+
       const tagExistsInPost = post.tags.some(tag => tag.toString() === tagId);
 
       if (!tagExistsInPost) {

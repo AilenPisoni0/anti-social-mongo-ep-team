@@ -7,14 +7,14 @@ const { createPostImageSchema, updatePostImageSchema } = require("./postImageSch
 
 module.exports={
     UserSchema,
-    UpdateUserSchema, //exportar updateUserschema
+    UpdateUserSchema, //exporta updateUserschema
     TagSchema,
-    UpdateTagSchema, //exportar updateTagSc
+    UpdateTagSchema, //exporta updateTagSc
     //PostTagSchema,
     createPostSchema,
     updatePostSchema,
     CommentSchema,
-    CommentUpdateSchema, //exportar CommentUpdateS
+    CommentUpdateSchema, //exporta CommentUpdateS
     createPostImageSchema,
     updatePostImageSchema,
 };
