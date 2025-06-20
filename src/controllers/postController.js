@@ -1,13 +1,11 @@
-// src/controllers/postController.js
 const mongoose = require('mongoose');
 const Post = require('../db/models/post');
 const Tag = require('../db/models/tag');
 const Comment = require('../db/models/comment');
 const User = require('../db/models/user');
-
+const { redisClient } = require('../db/config/redisClient');
 
 module.exports = {
-  // Crear un nuevo post
   createPost: async (req, res) => {
     try {
       const { description, userId, images, tags } = req.body;
@@ -22,6 +20,7 @@ module.exports = {
       });
 
       await newPost.save();
+      await redisClient.del('posts:todos');
 
       res.status(201).json(newPost);
     } catch (err) {
@@ -29,29 +28,35 @@ module.exports = {
       res.status(500).json({ error: 'No se pudo crear el post' });
     }
   },
-  // Obtener todos los posts
+
   getAllPosts: async (req, res) => {
+    const cacheKey = 'posts:todos';
     try {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        console.log('[Redis] Post desde caché');
+
+        return res.status(200).json(JSON.parse(cached));
+      }
+
       const maxAgeMonths = parseInt(process.env.MAX_COMMENT_AGE_MONTHS) || 6;
       const cutoffDate = new Date();
       cutoffDate.setMonth(cutoffDate.getMonth() - maxAgeMonths);
 
       const posts = await Post.find()
-        .populate('tags', 'id name')  
+        .populate('tags', 'id name')
         .populate({
           path: 'comments',
-          match: { createdAt: { $gte: cutoffDate } }, 
+          match: { createdAt: { $gte: cutoffDate } },
           populate: {
             path: 'userId',
-            select: 'nickName'  
+            select: 'nickName'
           }
         })
-        .sort({ createdAt: -1 });
+        .sort({ createdAt: -1 })
+        .lean();
 
-      if (posts.length === 0) {
-        return res.status(204).json({ message: 'No hay contenido' });
-      }
-
+      await redisClient.set(cacheKey, JSON.stringify(posts), { EX: 300 });
       res.status(200).json(posts);
     } catch (err) {
       console.error("Error en getAllPosts:", err);
@@ -59,15 +64,21 @@ module.exports = {
     }
   },
 
-  // Obtener un post por ID
-
   getPostById: async (req, res) => {
+    const { id } = req.params;
+    const cacheKey = `post:${id}`;
     try {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+      console.log('[Redis] Post desde caché');
+  return res.status(200).json(JSON.parse(cached));
+      }
+
       const maxAgeMonths = parseInt(process.env.MAX_COMMENT_AGE_MONTHS) || 6;
       const cutoffDate = new Date();
       cutoffDate.setMonth(cutoffDate.getMonth() - maxAgeMonths);
 
-      const post = await Post.findById(req.params.id)
+      const post = await Post.findById(id)
         .populate('tags', 'name')
         .populate({
           path: 'comments',
@@ -83,6 +94,7 @@ module.exports = {
         return res.status(404).json({ message: 'Post no encontrado' });
       }
 
+      await redisClient.set(cacheKey, JSON.stringify(post), { EX: 300 });
       res.status(200).json(post);
     } catch (err) {
       console.error('Error en getPostById:', err);
@@ -90,8 +102,6 @@ module.exports = {
     }
   },
 
-
-  // Actualizar un post
   updatePost: async (req, res) => {
     try {
       const { description, userId } = req.body;
@@ -101,13 +111,16 @@ module.exports = {
       post.userId = userId ?? post.userId;
       post.isEdited = true;
       await post.save();
+
+      await redisClient.del(`post:${req.params.id}`);
+      await redisClient.del('posts:todos');
+
       res.status(200).json(post);
     } catch (err) {
       res.status(500).json({ error: 'No se pudo actualizar el post' });
     }
   },
 
-  // Eliminar un post
   deletePost: async (req, res) => {
     try {
       const post = await Post.findById(req.params.id);
@@ -115,115 +128,118 @@ module.exports = {
         return res.status(404).json({ error: 'Post no encontrado' });
       }
       await post.deleteOne();
+      await redisClient.del(`post:${req.params.id}`);
+      await redisClient.del('posts:todos');
       res.status(204).send();
     } catch (err) {
       res.status(500).json({ error: 'No se pudo eliminar el post' });
     }
   },
+
+  getPostImages: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const post = await Post.findById(id).lean();
+
+      if (!post || !post.images) {
+        return res.status(404).json({ message: 'Imágenes no encontradas' });
+      }
+
+      res.status(200).json(post.images);
+    } catch (err) {
+      console.error('Error en getPostImages:', err);
+      res.status(500).json({ error: 'No se pudieron obtener las imágenes del post' });
+    }
+  },
+
   addImageFromPost: async (req, res) => {
     try {
-      const post = await Post.findByPk(req.params.id);
+      const { id } = req.params;
       const { url } = req.body;
 
-      const newImage = await PostImage.create({ postId: req.params.id, url });
-      await post.update({ isEdited: true });
+      const post = await Post.findById(id);
+      post.images.push({ url });
+      await post.save();
 
-      res.status(201).json(newImage);
+      await redisClient.del(`post:${id}`);
+      await redisClient.del('posts:todos');
+
+      res.status(200).json(post.images);
     } catch (err) {
-      res.status(500).json({ error: 'No se pudo agregar la imagen al post' });
+      console.error('Error en addImageFromPost:', err);
+      res.status(500).json({ error: 'No se pudo agregar la imagen' });
     }
   },
 
   removeImageFromPost: async (req, res) => {
     try {
-      const post = await Post.findByPk(req.params.id);
       const { id, imageId } = req.params;
+      const post = await Post.findById(id);
 
-      await PostImage.destroy({ where: { id: imageId, postId: id } });
-      await post.update({ isEdited: true });
+      post.images = post.images.filter(img => img._id.toString() !== imageId);
+      await post.save();
+
+      await redisClient.del(`post:${id}`);
+      await redisClient.del('posts:todos');
 
       res.status(204).send();
     } catch (err) {
-      res.status(500).json({ error: 'No se pudo eliminar la imagen del post' });
+      console.error('Error en removeImageFromPost:', err);
+      res.status(500).json({ error: 'No se pudo eliminar la imagen' });
     }
   },
 
-  // Agregar tag a un post
+  getPostTags: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const post = await Post.findById(id).populate('tags', 'name');
+
+      if (!post || !post.tags) {
+        return res.status(404).json({ message: 'Tags no encontrados' });
+      }
+
+      res.status(200).json(post.tags);
+    } catch (err) {
+      console.error('Error en getPostTags:', err);
+      res.status(500).json({ error: 'No se pudieron obtener los tags del post' });
+    }
+  },
+
   addTagFromPost: async (req, res) => {
     try {
       const { id, tagId } = req.params;
-      
-      const existingAssociation = await PostTag.findOne({
-        where: { postId: id, tagId }
-      });
+      const post = await Post.findById(id);
 
-      if (existingAssociation) {
-        return res.status(400).json({ error: 'El tag ya está asociado a este post' });
+      if (!post.tags.includes(tagId)) {
+        post.tags.push(tagId);
+        await post.save();
+
+        await redisClient.del(`post:${id}`);
+        await redisClient.del('posts:todos');
       }
 
-      await PostTag.create({ postId: id, tagId });
-      const post = await Post.findByPk(req.params.id);
-      await post.update({ isEdited: true });
-
-      const associatedTag = await Tag.findByPk(tagId, {
-        attributes: ['id', 'name']
-      });
-
-      res.status(201).json(associatedTag);
+      res.status(200).json(post.tags);
     } catch (err) {
-      res.status(500).json({ error: 'No se pudo asociar el tag al post' });
+      console.error('Error en addTagFromPost:', err);
+      res.status(500).json({ error: 'No se pudo agregar el tag' });
     }
   },
 
   removeTagFromPost: async (req, res) => {
     try {
       const { id, tagId } = req.params;
+      const post = await Post.findById(id);
 
-      await PostTag.destroy({ where: { postId: id, tagId } });
-      const post = await Post.findByPk(req.params.id);
-      await post.update({ isEdited: true });
+      post.tags = post.tags.filter(tag => tag.toString() !== tagId);
+      await post.save();
+
+      await redisClient.del(`post:${id}`);
+      await redisClient.del('posts:todos');
 
       res.status(204).send();
     } catch (err) {
-      res.status(500).json({ error: 'No se pudo eliminar el tag del post' });
-    }
-  },
-
-
-  getPostImages: async (req, res) => {
-    try {
-      const images = await PostImage.findAll({
-        where: { postId: req.params.id },
-        attributes: ['id', 'url', 'isEdited', 'createdAt']
-      });
-
-      if (images.length === 0) {
-        return res.status(204).json({ message: 'El post no tiene imágenes' });
-      }
-
-      res.status(200).json(images);
-    } catch (err) {
-      res.status(500).json({ error: 'No se pudieron obtener las imágenes' });
-    }
-  },
-
-  getPostTags: async (req, res) => {
-    try {
-      const post = await Post.findByPk(req.params.id, {
-        include: [{
-          model: Tag,
-          attributes: ['id', 'name'],
-          through: { attributes: [] }
-        }]
-      });
-
-      if (post.Tags.length === 0) {
-        return res.status(204).json({ message: 'El post no tiene tags' });
-      }
-
-      res.status(200).json(post.Tags);
-    } catch (err) {
-      res.status(500).json({ error: 'No se pudieron obtener los tags' });
+      console.error('Error en removeTagFromPost:', err);
+      res.status(500).json({ error: 'No se pudo eliminar el tag' });
     }
   }
 };

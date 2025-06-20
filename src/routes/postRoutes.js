@@ -31,6 +31,8 @@ router.delete('/:id',
     genericMiddleware.existModelById(Post),
     postController.deletePost
 );
+console.log("typeof getPostImages:", typeof postController.getPostImages);
+
 router.get('/:id/images',
     genericMiddleware.validateId,
     genericMiddleware.existModelById(Post),
