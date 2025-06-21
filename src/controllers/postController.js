@@ -8,15 +8,12 @@ const { redisClient } = require('../db/config/redisClient');
 module.exports = {
   createPost: async (req, res) => {
     try {
-      const { description, userId, images, tags } = req.body;
+      const { description, userId, tags } = req.body;
 
       const newPost = new Post({
         description,
         userId,
-        images: images || [],
-        tags: tags || [],
-        isDeleted: false,
-        isEdited: false
+        tags: tags || []
       });
 
       await newPost.save();
@@ -35,7 +32,6 @@ module.exports = {
       const cached = await redisClient.get(cacheKey);
       if (cached) {
         console.log('[Redis] Post desde caché');
-
         return res.status(200).json(JSON.parse(cached));
       }
 
@@ -45,6 +41,7 @@ module.exports = {
 
       const posts = await Post.find()
         .populate('tags', 'id name')
+        .populate('postImages', 'url')
         .populate({
           path: 'comments',
           match: { createdAt: { $gte: cutoffDate } },
@@ -70,8 +67,8 @@ module.exports = {
     try {
       const cached = await redisClient.get(cacheKey);
       if (cached) {
-      console.log('[Redis] Post desde caché');
-  return res.status(200).json(JSON.parse(cached));
+        console.log('[Redis] Post desde caché');
+        return res.status(200).json(JSON.parse(cached));
       }
 
       const maxAgeMonths = parseInt(process.env.MAX_COMMENT_AGE_MONTHS) || 6;
@@ -80,6 +77,7 @@ module.exports = {
 
       const post = await Post.findById(id)
         .populate('tags', 'name')
+        .populate('postImages', 'url')
         .populate({
           path: 'comments',
           match: { createdAt: { $gte: cutoffDate } },
@@ -104,12 +102,13 @@ module.exports = {
 
   updatePost: async (req, res) => {
     try {
-      const { description, userId } = req.body;
+      const { description, userId, tags } = req.body;
       const post = await Post.findById(req.params.id);
 
-      post.description = description ?? post.description;
-      post.userId = userId ?? post.userId;
-      post.isEdited = true;
+      if (description !== undefined) post.description = description;
+      if (userId !== undefined) post.userId = userId;
+      if (tags !== undefined) post.tags = tags;
+
       await post.save();
 
       await redisClient.del(`post:${req.params.id}`);
@@ -123,11 +122,8 @@ module.exports = {
 
   deletePost: async (req, res) => {
     try {
-      const post = await Post.findById(req.params.id);
-      if (!post) {
-        return res.status(404).json({ error: 'Post no encontrado' });
-      }
-      await post.deleteOne();
+      await Post.findByIdAndDelete(req.params.id);
+
       await redisClient.del(`post:${req.params.id}`);
       await redisClient.del('posts:todos');
       res.status(204).send();
@@ -213,10 +209,10 @@ module.exports = {
       if (!post.tags.includes(tagId)) {
         post.tags.push(tagId);
         await post.save();
-
-        await redisClient.del(`post:${id}`);
-        await redisClient.del('posts:todos');
       }
+
+      await redisClient.del(`post:${id}`);
+      await redisClient.del('posts:todos');
 
       res.status(200).json(post.tags);
     } catch (err) {

@@ -1,37 +1,41 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
-const { genericMiddleware, userMiddleware } = require("../middlewares");
-const { UserSchema } = require("../schemas/");
-const  User  = require("../db/models/user");
+const { genericMiddleware, userMiddleware, postMiddleware } = require("../middlewares");
+const { UserSchema, UpdateUserSchema } = require("../schemas/");
+const User = require("../db/models/user");
 
-//POST OK
+//POST - Crear usuario
 router.post('/',
   genericMiddleware.schemaValidator(UserSchema),
   userMiddleware.existUserByAttribute('nickName'),
   userMiddleware.existUserByAttribute('email'),
   userController.createUser
 );
-//GETALL OK
+
+//GET - Obtener todos los usuarios
 router.get('/', userController.getAllUsers);
 
-//GETBYID OK
+//GET - Obtener usuario por ID
 router.get('/:id',
   genericMiddleware.validateId,
   genericMiddleware.existModelById(User),
   userController.getUserById
 );
-//UPDATE OK
+
+//PUT - Actualizar usuario
 router.put('/:id',
   genericMiddleware.validateId,
   genericMiddleware.existModelById(User),
+  genericMiddleware.schemaValidator(UpdateUserSchema),
   userMiddleware.existUserByAttribute('email'),
   userController.updateUser
 );
-//DELETEBYID OK (NO PUDE HACER EL SOFT DELETE)
+
+//DELETE - Eliminar usuario con efecto cascada
 router.delete('/:id',
   genericMiddleware.validateId,
-  genericMiddleware.existModelById(User),
+  postMiddleware.deleteUserWithCascade,
   userController.deleteUser
 );
 

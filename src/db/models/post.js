@@ -2,48 +2,28 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const postSchema = new Schema({
-  
+
   userId: {
     type: Schema.Types.ObjectId,
-    ref: 'User', 
-    required: true 
+    ref: 'User',
+    required: true
   },
-  
- 
+
+
   description: {
     type: String,
     required: true,
-    trim: true 
+    trim: true
   },
-  
-  images: [{
 
-    url: { 
-      type: String,
-      required: true,
-      trim: true
-    },
-
-    description: {
-      type: String,
-      trim: true
-    },
-
-    uploadedAt: { 
-      type: Date,
-      default: Date.now
-    }
-  }],
-  
-  
   tags: [{
     type: Schema.Types.ObjectId,
-    
-    ref: 'Tag' 
+
+    ref: 'Tag'
   }]
 }, {
-  
-  timestamps: true, 
+
+  timestamps: true,
 });
 
 // - Buscar posts de un usuario específico, ordenados por fecha de creación descendente.
@@ -55,7 +35,14 @@ postSchema.index({ tags: 1 });
 postSchema.virtual('comments', {
   ref: 'Comment',
   localField: '_id',
-  foreignField: 'postId' 
+  foreignField: 'postId'
+});
+
+// Virtual para obtener las imágenes del post desde la colección PostImage
+postSchema.virtual('postImages', {
+  ref: 'PostImage',
+  localField: '_id',
+  foreignField: 'postId'
 });
 
 postSchema.set('toJSON', { virtuals: true });
