@@ -1,7 +1,8 @@
 module.exports = {
   genericMiddleware: require("./genericMiddlewares"),
-  userMiddleware: require("./userMiddlewares"), 
+  userMiddleware: require("./userMiddlewares"),
   commentMiddleware: require("./commentMiddlewares"),
   tagMiddleware: require("./tagMiddlewares"),
-  postImageMiddleware: require("./postImageMiddlewares")
+  postImageMiddleware: require("./postImageMiddlewares"),
+  postMiddleware: require("./postMiddlewares")
 };

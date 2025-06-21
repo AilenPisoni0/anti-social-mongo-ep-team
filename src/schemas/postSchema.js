@@ -18,13 +18,6 @@ const createPostSchema = Joi.object({
     "array.base": "Los tags deben proporcionarse como un array",
     "string.length": "El ID de cada tag debe tener 24 caracteres",
     "string.hex": "El ID de cada tag debe ser un hexadecimal válido"
-  }),
-
-  images: Joi.array().items(
-    Joi.string().uri()
-  ).optional().messages({
-    "array.base": "Las imágenes deben proporcionarse como un array de URLs válidas",
-    "string.uri": "Cada elemento en el array de imágenes debe ser una URL válida"
   })
 });
 
@@ -38,26 +31,13 @@ const updatePostSchema = Joi.object({
     "string.length": "El ID del usuario debe tener 24 caracteres",
     "string.hex": "El ID del usuario debe ser un hexadecimal válido"
   }),
-  // Si permites actualizar o reestructurar imágenes directamente en la actualización del post:
-  images: Joi.array().items(
-    Joi.object({
-      _id: Joi.string().length(24).hex().optional(),
-      postImageURL: Joi.string().uri().required(),
-      isEdited: Joi.boolean().optional(),
-      isDeleted: Joi.boolean().optional()
-    })
-  ).optional().messages({
-    "array.base": "Las imágenes deben proporcionarse como un array",
-  }),
   tags: Joi.array().items(
     Joi.string().length(24).hex()
   ).optional().messages({
     "array.base": "Los tags deben proporcionarse como un array",
     "string.length": "El ID de cada tag debe tener 24 caracteres",
     "string.hex": "El ID de cada tag debe ser un hexadecimal válido"
-  }),
-  isEdited: Joi.boolean().optional(),
-  isDeleted: Joi.boolean().optional()
+  })
 }).min(1);
 
 module.exports = {

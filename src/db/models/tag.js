@@ -6,12 +6,11 @@ const tagSchema = new Schema({
     type: String,
     required: true,
     unique: true,
-    trim: true, 
-    lowercase: true 
+    trim: true
   }
 }, {
-  
-  timestamps: true 
+
+  timestamps: true
 });
 
 // Índice para mejorar el rendimiento de las consultas por nombre de etiqueta.

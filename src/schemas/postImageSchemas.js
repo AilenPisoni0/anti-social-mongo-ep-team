@@ -1,22 +1,22 @@
 const Joi = require('joi');
 
 const createPostImageSchema = Joi.object({
-    postId: Joi.string().length(24).hex().required().messages({ //
+  postId: Joi.string().length(24).hex().required().messages({
     "any.required": "El ID del post es obligatorio",
-    "number.min": "El ID del post debe ser un número positivo"
+    "string.length": "El ID del post debe tener 24 caracteres",
+    "string.hex": "El ID del post debe ser un hexadecimal válido"
   }),
-  postImageURL: Joi.string().uri().required().messages({
+  url: Joi.string().uri().required().messages({
     "any.required": "La URL de la imagen es obligatoria",
     "string.uri": "La URL de la imagen debe ser una dirección web válida"
   })
 });
 
 const updatePostImageSchema = Joi.object({
-  postImageURL: Joi.string().uri().optional().messages({
+  url: Joi.string().uri().optional().messages({
     "string.uri": "La URL de la imagen debe ser una dirección web válida"
   }),
-  isEdited: Joi.boolean().optional(),
-  isDeleted: Joi.boolean().optional()
+  isEdited: Joi.boolean().optional()
 });
 
 module.exports = {

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const postController = require('../controllers/postController');
 const commentController = require('../controllers/commentController');
-const { genericMiddleware, postImageMiddleware, tagMiddleware, userMiddleware } = require("../middlewares");
+const { genericMiddleware, postMiddleware, tagMiddleware, userMiddleware } = require("../middlewares");
 const { createPostSchema, updatePostSchema } = require("../schemas");
 const Post = require("../db/models/post");
 const Tag = require("../db/models/tag");
@@ -25,13 +25,12 @@ router.put('/:id',
     userMiddleware.existUserModelById(User),
     postController.updatePost
 );
-//OK
+//DELETE con efecto cascada
 router.delete('/:id',
     genericMiddleware.validateId,
-    genericMiddleware.existModelById(Post),
+    postMiddleware.deletePostWithCascade,
     postController.deletePost
 );
-console.log("typeof getPostImages:", typeof postController.getPostImages);
 
 router.get('/:id/images',
     genericMiddleware.validateId,
