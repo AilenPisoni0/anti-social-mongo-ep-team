@@ -1,7 +1,6 @@
 console.log("UnaHur - Anti-Social net");
 const express = require('express')
 const app = express()
-//const redisClient =  require('./db/config/redisClient')
 const { redisClient, connectRedis } = require('./db/config/redisClient');
 const conectarDB = require('./db/config/config')
 const { userRoute, commentRoute, tagRoute, postRoute, postImageRoute, postTagRoute } = require("./routes");
@@ -25,11 +24,8 @@ app.use("/post-images", postImageRoute);
 app.use("/post-tags", postTagRoute);
 app.use('/uploads/images', express.static('uploads/images'));
 
-// conexion a bases de datos
+// Conexión a bases de datos
 conectarDB()
-redisClient.connect()
-  .then(() => console.log('Conectado a redis'))
-  .catch(console.error)
 connectRedis()
   .then(() => console.log('Conectado a Redis'))
   .catch(console.error);

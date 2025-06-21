@@ -13,7 +13,7 @@ router.post('/',
     fileValidationMiddleware.validateRequiredFields,
     fileValidationMiddleware.validateImageFiles,
     genericMiddleware.schemaValidator(createPostSchema),
-    userMiddleware.existUserModelById(User),
+    userMiddleware.existUserModelById(),
     postController.createPost
 );
 
@@ -24,7 +24,7 @@ router.put('/:id',
     genericMiddleware.createEntityExistsValidator(Post, 'Post'),
     fileValidationMiddleware.validateImageFiles,
     genericMiddleware.schemaValidator(updatePostSchema),
-    userMiddleware.existUserModelById(User),
+    userMiddleware.existUserModelById(),
     postController.updatePost
 );
 

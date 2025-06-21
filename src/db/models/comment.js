@@ -22,6 +22,21 @@ const CommentSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Virtual para obtener el usuario del comentario
+CommentSchema.virtual('user', {
+  ref: 'User',
+  localField: 'userId',
+  foreignField: '_id',
+  justOne: true
+});
+
+// Virtual para obtener el post del comentario
+CommentSchema.virtual('post', {
+  ref: 'Post',
+  localField: 'postId',
+  foreignField: '_id',
+  justOne: true
+});
 
 CommentSchema.set('toJSON', {
   virtuals: true,

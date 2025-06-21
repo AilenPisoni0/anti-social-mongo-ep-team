@@ -136,7 +136,7 @@ module.exports = {
             const posts = await Post.find({ tags: tagId })
                 .populate('userId', 'nickName')
                 .populate('tags', 'name')
-                .populate('postImages', 'imageUrl')
+                .populate('postImages', 'url')
                 .sort({ createdAt: -1 })
                 .lean();
 

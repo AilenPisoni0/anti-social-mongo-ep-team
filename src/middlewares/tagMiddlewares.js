@@ -6,15 +6,14 @@ const { handleMongoError } = require('../utils/validation');
 
 /**
  * Middleware para verificar que un tag existe por ID
- * @param {Object} modelo - Modelo a verificar
  * @returns {Function} - Middleware function
  */
-const existTagModelById = (modelo) => {
+const existTagModelById = () => {
   return async (req, res, next) => {
     const tagId = req.params.tagId;
 
     try {
-      const data = await modelo.findById(tagId);
+      const data = await Tag.findById(tagId);
       if (!data) {
         return res.status(404).json({ error: `Tag con ID ${tagId} no encontrado` });
       }

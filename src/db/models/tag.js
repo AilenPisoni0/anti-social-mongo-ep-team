@@ -12,6 +12,13 @@ const tagSchema = new Schema({
   timestamps: true
 });
 
+// Virtual para obtener los posts que usan este tag
+tagSchema.virtual('posts', {
+  ref: 'Post',
+  localField: '_id',
+  foreignField: 'tags'
+});
+
 tagSchema.set('toJSON', {
   virtuals: true,
   transform: (_, ret) => {

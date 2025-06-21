@@ -54,7 +54,7 @@ module.exports = {
         return users.length === 0 ? res.status(204).send() : res.status(200).json(users);
       }
 
-      const users = await User.find({ isDeleted: false }, 'nickName email createdAt updatedAt').lean();
+      const users = await User.find({}, 'nickName email createdAt updatedAt').lean();
 
       if (users.length === 0) {
         return res.status(204).send();
@@ -79,7 +79,7 @@ module.exports = {
         return res.status(200).json(JSON.parse(cached));
       }
 
-      const user = await User.findOne({ _id: id, isDeleted: false })
+      const user = await User.findById(id)
         .select('nickName email createdAt updatedAt');
 
       if (!user) {

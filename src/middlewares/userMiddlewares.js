@@ -12,14 +12,13 @@ const existUserByAttribute = (attribute) => {
 
 /**
  * Middleware para verificar que un usuario existe por ID
- * @param {Object} modelo - Modelo a verificar (debe tener userId en body)
  * @returns {Function} - Middleware function
  */
-const existUserModelById = (modelo) => {
+const existUserModelById = () => {
     return async (req, res, next) => {
         const userId = req.body.userId;
         if (userId) {
-            const data = await modelo.findById(userId);
+            const data = await User.findById(userId);
             if (!data) {
                 return res
                     .status(404)
