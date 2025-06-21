@@ -8,7 +8,7 @@
  *         - description
  *         - userId
  *       properties:
- *         _id:
+ *         id:
  *           type: string
  *           description: ID único del post
  *           example: "507f1f77bcf86cd799439011"
@@ -62,7 +62,7 @@
  *         - postId
  *         - url
  *       properties:
- *         _id:
+ *         id:
  *           type: string
  *           description: ID único de la imagen
  *           example: "507f1f77bcf86cd799439015"
@@ -182,13 +182,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Post creado exitosamente"
- *                 post:
- *                   $ref: '#/components/schemas/Post'
+ *               $ref: '#/components/schemas/Post'
  *       400:
  *         description: Datos de entrada inválidos
  *       404:
@@ -247,13 +241,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Post actualizado exitosamente"
- *                 post:
- *                   $ref: '#/components/schemas/Post'
+ *               $ref: '#/components/schemas/Post'
  *       400:
  *         description: Datos de entrada inválidos
  *       404:
@@ -385,7 +373,7 @@
  *   get:
  *     summary: Obtener comentarios de un post
  *     description: Retorna todos los comentarios de un post específico
- *     tags: [Comments]
+ *     tags: [Post Comments]
  *     parameters:
  *       - in: path
  *         name: id

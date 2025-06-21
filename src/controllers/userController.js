@@ -26,10 +26,7 @@ module.exports = {
       await newUser.save();
       await invalidateUserCaches();
 
-      res.status(201).json({
-        message: "Usuario creado exitosamente",
-        user: newUser
-      });
+      res.status(201).json(newUser);
     } catch (err) {
       if (err.code === 11000 && err.keyPattern?.nickName) {
         return res.status(400).json({ error: 'Ya existe un usuario con ese nickName' });
@@ -106,10 +103,7 @@ module.exports = {
       await user.save();
       await invalidateUserCaches(id);
 
-      res.status(200).json({
-        message: "Usuario actualizado exitosamente",
-        user: user
-      });
+      res.status(200).json(user);
     } catch (err) {
       if (err.code === 11000 && err.keyPattern?.nickName) {
         return res.status(400).json({ error: 'Ya existe un usuario con ese nickName' });

@@ -20,10 +20,7 @@ module.exports = {
 
       await invalidateTagCaches();
 
-      res.status(201).json({
-        message: "Tag creado exitosamente",
-        tag: newTag
-      });
+      res.status(201).json(newTag);
     } catch (err) {
       if (err.code === 11000 && err.keyPattern?.name) {
         return res.status(400).json({ error: `Ya existe un tag con el nombre ${name}` });
@@ -101,10 +98,7 @@ module.exports = {
 
       await invalidateTagCaches(tagId);
 
-      res.status(200).json({
-        message: "Tag actualizado exitosamente",
-        tag: updatedTag
-      });
+      res.status(200).json(updatedTag);
     } catch (err) {
       if (err.code === 11000 && err.keyPattern?.name) {
         return res.status(400).json({ error: 'El nombre del tag ya existe' });
@@ -124,14 +118,12 @@ module.exports = {
         return res.status(404).json({ error: 'Tag no encontrado' });
       }
 
-      // Remover relaciones con posts antes de eliminar el tag
       const Post = require('../db/models/post');
       await Post.updateMany(
         { tags: tagId },
         { $pull: { tags: tagId } }
       );
 
-      // Eliminar el tag de la base de datos
       await Tag.findByIdAndDelete(tagId);
 
       await invalidateTagCaches(tagId);

@@ -68,7 +68,6 @@ module.exports = {
 
       await newPost.save();
 
-      // Crear imágenes si se proporcionaron URLs
       if (imagenes && imagenes.length > 0) {
         const postImages = imagenes.map(url => ({
           postId: newPost._id,
@@ -78,15 +77,11 @@ module.exports = {
         await PostImage.insertMany(postImages);
       }
 
-      // Obtener el post con formato unificado
       const postWithData = await getPostWithPopulatedData(newPost._id);
 
       await invalidatePostCaches();
 
-      res.status(201).json({
-        message: "Post creado exitosamente",
-        post: postWithData
-      });
+      res.status(201).json(postWithData);
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'No se pudo crear el post' });
@@ -152,12 +147,9 @@ module.exports = {
 
       await post.save();
 
-      // Actualizar imágenes si se proporcionaron
       if (imagenes !== undefined) {
-        // Eliminar imágenes existentes
         await PostImage.deleteMany({ postId: post._id });
 
-        // Crear nuevas imágenes
         if (imagenes.length > 0) {
           const postImages = imagenes.map(url => ({
             postId: post._id,
@@ -167,15 +159,11 @@ module.exports = {
         }
       }
 
-      // Obtener el post actualizado con formato unificado
       const updatedPost = await getPostWithPopulatedData(post._id);
 
       await invalidatePostCaches(req.params.id);
 
-      res.status(200).json({
-        message: "Post actualizado exitosamente",
-        post: updatedPost
-      });
+      res.status(200).json(updatedPost);
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'No se pudo actualizar el post' });
@@ -184,7 +172,6 @@ module.exports = {
 
   deletePost: async (req, res) => {
     try {
-      // El middleware ya eliminó los elementos asociados y verificó que el post existe
       await Post.findByIdAndDelete(req.params.id);
 
       await invalidatePostCaches(req.params.id);
@@ -200,23 +187,19 @@ module.exports = {
     try {
       const { id: postId, tagId } = req.params;
 
-      // Verificar que el tag existe
       const tag = await Tag.findById(tagId);
       if (!tag) {
         return res.status(404).json({ error: 'Tag no encontrado' });
       }
 
-      // Verificar que el post no tenga ya este tag
       const post = await Post.findById(postId);
       if (post.tags.includes(tagId)) {
         return res.status(400).json({ error: 'El post ya tiene este tag asociado' });
       }
 
-      // Agregar el tag al post
       post.tags.push(tagId);
       await post.save();
 
-      // Obtener el post actualizado con formato unificado
       const updatedPost = await getPostWithPopulatedData(postId);
 
       await invalidatePostCaches(postId);
@@ -235,23 +218,19 @@ module.exports = {
     try {
       const { id: postId, tagId } = req.params;
 
-      // Verificar que el tag existe
       const tag = await Tag.findById(tagId);
       if (!tag) {
         return res.status(404).json({ error: 'Tag no encontrado' });
       }
 
-      // Verificar que el post tenga este tag
       const post = await Post.findById(postId);
       if (!post.tags.includes(tagId)) {
         return res.status(400).json({ error: 'El post no tiene este tag asociado' });
       }
 
-      // Remover el tag del post
       post.tags = post.tags.filter(id => id.toString() !== tagId);
       await post.save();
 
-      // Obtener el post actualizado con formato unificado
       const updatedPost = await getPostWithPopulatedData(postId);
 
       await invalidatePostCaches(postId);

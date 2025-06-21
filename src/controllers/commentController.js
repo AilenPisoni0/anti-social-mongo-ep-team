@@ -29,10 +29,7 @@ module.exports = {
 
       await invalidateCommentCaches(null, postId);
 
-      res.status(201).json({
-        message: "Comentario creado exitosamente",
-        comment: newComment
-      });
+      res.status(201).json(newComment);
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'No se pudo crear el comentario' });
@@ -152,10 +149,7 @@ module.exports = {
 
       await invalidateCommentCaches(id, updatedComment.postId);
 
-      res.status(200).json({
-        message: "Comentario actualizado exitosamente",
-        comment: updatedComment
-      });
+      res.status(200).json(updatedComment);
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'No se pudo actualizar el comentario' });

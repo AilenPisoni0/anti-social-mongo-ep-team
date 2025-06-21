@@ -5,7 +5,7 @@
  *     Tag:
  *       type: object
  *       properties:
- *         _id:
+ *         id:
  *           type: string
  *           example: "6856ea88be5012c57195297d"
  *         name:
@@ -77,13 +77,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Tag creado exitosamente"
- *                 tag:
- *                   $ref: '#/components/schemas/Tag'
+ *               $ref: '#/components/schemas/Tag'
  *       400:
  *         description: Datos inválidos o tag ya existe
  *         content:
@@ -167,13 +161,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Tag actualizado exitosamente"
- *                 tag:
- *                   $ref: '#/components/schemas/Tag'
+ *               $ref: '#/components/schemas/Tag'
  *       400:
  *         description: Datos inválidos o nombre duplicado
  *       404:

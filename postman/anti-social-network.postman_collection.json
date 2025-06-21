@@ -41,7 +41,7 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"url": "{{base_url}}/users/2"
+						"url": "{{base_url}}/users/{{user_id}}"
 					},
 					"response": []
 				},
@@ -59,7 +59,7 @@
 							"mode": "raw",
 							"raw": "{\n    \"email\": \"john.updated@example.com\"\n}"
 						},
-						"url": "{{base_url}}/users/1"
+						"url": "{{base_url}}/users/{{user_id}}"
 					},
 					"response": []
 				},
@@ -68,7 +68,7 @@
 					"request": {
 						"method": "DELETE",
 						"header": [],
-						"url": "{{base_url}}/users/1"
+						"url": "{{base_url}}/users/{{user_id}}"
 					},
 					"response": []
 				}
@@ -98,7 +98,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"description\": \"Mi primer post en la red antisocial!\",\n    \"userId\": 2\n}"
+							"raw": "{\n    \"description\": \"Mi primer post en la red antisocial!\",\n    \"userId\": \"{{user_id}}\",\n    \"tags\": [\"{{tag_id}}\"],\n    \"imagenes\": [\"https://ejemplo.com/imagen1.jpg\"]\n}"
 						},
 						"url": "{{base_url}}/posts"
 					},
@@ -109,7 +109,7 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"url": "{{base_url}}/posts/2"
+						"url": "{{base_url}}/posts/{{post_id}}"
 					},
 					"response": []
 				},
@@ -125,9 +125,9 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"description\": \"Post actualizadito\",\n    \"userId\": 3\n}"
+							"raw": "{\n    \"description\": \"Post actualizado\",\n    \"userId\": \"{{user_id}}\"\n}"
 						},
-						"url": "{{base_url}}/posts/2"
+						"url": "{{base_url}}/posts/{{post_id}}"
 					},
 					"response": []
 				},
@@ -136,7 +136,7 @@
 					"request": {
 						"method": "DELETE",
 						"header": [],
-						"url": "{{base_url}}/posts/1"
+						"url": "{{base_url}}/posts/{{post_id}}"
 					},
 					"response": []
 				},
@@ -145,12 +145,12 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"url": "{{base_url}}/posts/2/images"
+						"url": "{{base_url}}/posts/{{post_id}}/images"
 					},
 					"response": []
 				},
 				{
-					"name": "Post Post Image",
+					"name": "Add Post Image",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -161,9 +161,9 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"url\": \"https://example.com/image.jpg\"\n}"
+							"raw": "{\n    \"url\": \"https://ejemplo.com/nueva-imagen.jpg\"\n}"
 						},
-						"url": "{{base_url}}/posts/2/images"
+						"url": "{{base_url}}/posts/{{post_id}}/images"
 					},
 					"response": []
 				},
@@ -172,25 +172,7 @@
 					"request": {
 						"method": "DELETE",
 						"header": [],
-						"url": "{{base_url}}/posts/2/images/3"
-					},
-					"response": []
-				},
-				{
-					"name": "Post Post Tag",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"url\": \"https://example.com/image.jpg\"\n}"
-						},
-						"url": "{{base_url}}/posts/2/tags/3"
+						"url": "{{base_url}}/posts/{{post_id}}/images/{{image_id}}"
 					},
 					"response": []
 				},
@@ -199,25 +181,38 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"url": "{{base_url}}/posts/2/tags"
+						"url": "{{base_url}}/posts/{{post_id}}/tags"
 					},
 					"response": []
 				},
 				{
-					"name": "Delete Post Tag",
+					"name": "Add Post Tag",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": "{{base_url}}/posts/{{post_id}}/tags/{{tag_id}}"
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Post Tag",
 					"request": {
 						"method": "DELETE",
 						"header": [],
-						"url": "{{base_url}}/posts/2/tags/3"
+						"url": "{{base_url}}/posts/{{post_id}}/tags/{{tag_id}}"
 					},
 					"response": []
 				},
 				{
-					"name": "Get all Post Comments",
+					"name": "Get Post Comments",
 					"request": {
 						"method": "GET",
 						"header": [],
-						"url": "{{base_url}}/posts/2/comments"
+						"url": "{{base_url}}/posts/{{post_id}}/comments"
 					},
 					"response": []
 				}
@@ -227,7 +222,7 @@
 			"name": "Comments",
 			"item": [
 				{
-					"name": "Get all Comments",
+					"name": "Get All Comments",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -236,11 +231,11 @@
 					"response": []
 				},
 				{
-					"name": "Get comment by ID",
+					"name": "Get Comment by ID",
 					"request": {
 						"method": "GET",
 						"header": [],
-						"url": "{{base_url}}/comments/1"
+						"url": "{{base_url}}/comments/{{comment_id}}"
 					},
 					"response": []
 				},
@@ -256,7 +251,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"content\": \"Gran post!\",\n    \"userId\": 2,\n    \"postId\": 2\n}"
+							"raw": "{\n    \"content\": \"Gran post!\",\n    \"userId\": \"{{user_id}}\",\n    \"postId\": \"{{post_id}}\"\n}"
 						},
 						"url": "{{base_url}}/comments"
 					},
@@ -274,9 +269,9 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"content\": \"eeexcelente post!\"\n}"
+							"raw": "{\n    \"content\": \"Excelente post actualizado!\"\n}"
 						},
-						"url": "{{base_url}}/comments/1"
+						"url": "{{base_url}}/comments/{{comment_id}}"
 					},
 					"response": []
 				},
@@ -285,7 +280,7 @@
 					"request": {
 						"method": "DELETE",
 						"header": [],
-						"url": "{{base_url}}/comments/1"
+						"url": "{{base_url}}/comments/{{comment_id}}"
 					},
 					"response": []
 				}
@@ -326,7 +321,7 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"url": "{{base_url}}/tags/1"
+						"url": "{{base_url}}/tags/{{tag_id}}"
 					},
 					"response": []
 				},
@@ -342,9 +337,9 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"lifestyle-actualizadito\"\n}"
+							"raw": "{\n    \"name\": \"lifestyle-actualizado\"\n}"
 						},
-						"url": "{{base_url}}/tags/2"
+						"url": "{{base_url}}/tags/{{tag_id}}"
 					},
 					"response": []
 				},
@@ -353,7 +348,7 @@
 					"request": {
 						"method": "DELETE",
 						"header": [],
-						"url": "{{base_url}}/tags/1"
+						"url": "{{base_url}}/tags/{{tag_id}}"
 					},
 					"response": []
 				}
@@ -363,7 +358,32 @@
 	"variable": [
 		{
 			"key": "base_url",
-			"value": "http://localhost:3000",
+			"value": "http://localhost:3001",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "REEMPLAZAR_CON_USER_ID_REAL",
+			"type": "string"
+		},
+		{
+			"key": "post_id",
+			"value": "REEMPLAZAR_CON_POST_ID_REAL",
+			"type": "string"
+		},
+		{
+			"key": "tag_id",
+			"value": "REEMPLAZAR_CON_TAG_ID_REAL",
+			"type": "string"
+		},
+		{
+			"key": "comment_id",
+			"value": "REEMPLAZAR_CON_COMMENT_ID_REAL",
+			"type": "string"
+		},
+		{
+			"key": "image_id",
+			"value": "REEMPLAZAR_CON_IMAGE_ID_REAL",
 			"type": "string"
 		}
 	]

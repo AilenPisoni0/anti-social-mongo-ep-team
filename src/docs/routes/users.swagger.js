@@ -5,7 +5,7 @@
  *     User:
  *       type: object
  *       properties:
- *         _id:
+ *         id:
  *           type: string
  *           example: "6856ea88be5012c571952977"
  *         nickName:
@@ -21,14 +21,6 @@
  *         updatedAt:
  *           type: string
  *           format: date-time
- *         posts:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/Post'
- *         comments:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/Comment'
  * 
  * /users:
  *   get:
@@ -87,13 +79,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Usuario creado exitosamente"
- *                 user:
- *                   $ref: '#/components/schemas/User'
+ *               $ref: '#/components/schemas/User'
  *       400:
  *         description: Datos inválidos o usuario ya existe
  *         content:
@@ -177,13 +163,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Usuario actualizado exitosamente"
- *                 user:
- *                   $ref: '#/components/schemas/User'
+ *               $ref: '#/components/schemas/User'
  *       400:
  *         description: Datos inválidos o valores duplicados
  *       404:

@@ -5,8 +5,7 @@ const tagSchema = new Schema({
   name: {
     type: String,
     required: true,
-    unique: true,
-    trim: true
+    unique: true
   }
 }, {
   timestamps: true
@@ -20,7 +19,7 @@ tagSchema.virtual('posts', {
 });
 
 tagSchema.set('toJSON', {
-  virtuals: true,
+  virtuals: false,
   transform: (_, ret) => {
     ret.id = ret._id;
     delete ret._id;
@@ -28,7 +27,7 @@ tagSchema.set('toJSON', {
   }
 });
 tagSchema.set('toObject', {
-  virtuals: true,
+  virtuals: false,
   transform: (_, ret) => {
     ret.id = ret._id;
     delete ret._id;

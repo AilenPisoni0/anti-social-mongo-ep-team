@@ -35,7 +35,7 @@ CommentSchema.virtual('post', {
 });
 
 CommentSchema.set('toJSON', {
-  virtuals: true,
+  virtuals: false,
   transform: (_, ret) => {
     ret.id = ret._id;
     delete ret._id;
@@ -44,7 +44,7 @@ CommentSchema.set('toJSON', {
 });
 
 CommentSchema.set('toObject', {
-  virtuals: true,
+  virtuals: false,
   transform: (_, ret) => {
     ret.id = ret._id;
     delete ret._id;

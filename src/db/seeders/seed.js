@@ -37,36 +37,15 @@ async function seed() {
         const users = await User.insertMany([
             {
                 nickName: 'usuario1',
-                email: 'usuario1@example.com',
-                password: 'password123',
-                firstName: 'Juan',
-                lastName: 'Pérez',
-                birthDate: new Date('1990-01-15'),
-                gender: 'M',
-                country: 'Argentina',
-                city: 'Buenos Aires'
+                email: 'usuario1@example.com'
             },
             {
                 nickName: 'usuario2',
-                email: 'usuario2@example.com',
-                password: 'password123',
-                firstName: 'María',
-                lastName: 'González',
-                birthDate: new Date('1992-05-20'),
-                gender: 'F',
-                country: 'Argentina',
-                city: 'Córdoba'
+                email: 'usuario2@example.com'
             },
             {
                 nickName: 'usuario3',
-                email: 'usuario3@example.com',
-                password: 'password123',
-                firstName: 'Carlos',
-                lastName: 'López',
-                birthDate: new Date('1988-12-10'),
-                gender: 'M',
-                country: 'Argentina',
-                city: 'Rosario'
+                email: 'usuario3@example.com'
             }
         ]);
         console.log(`${users.length} usuarios creados`);
@@ -83,7 +62,6 @@ async function seed() {
         ]);
         console.log(`${tags.length} tags creados`);
 
-        console.log('Creando posts...');
         const posts = await Post.insertMany([
             {
                 description: 'Mi primer post en la red antisocial! :)',

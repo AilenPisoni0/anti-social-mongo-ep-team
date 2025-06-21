@@ -5,7 +5,7 @@
  *     Comment:
  *       type: object
  *       properties:
- *         _id:
+ *         id:
  *           type: string
  *           example: "6856ea88be5012c571952987"
  *         content:
@@ -87,13 +87,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Comentario creado exitosamente"
- *                 comment:
- *                   $ref: '#/components/schemas/Comment'
+ *               $ref: '#/components/schemas/Comment'
  *       400:
  *         description: Datos inválidos
  *       404:
@@ -168,13 +162,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Comentario actualizado exitosamente"
- *                 comment:
- *                   $ref: '#/components/schemas/Comment'
+ *               $ref: '#/components/schemas/Comment'
  *       400:
  *         description: Datos inválidos
  *       404:
