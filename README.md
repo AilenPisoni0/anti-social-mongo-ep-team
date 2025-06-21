@@ -26,7 +26,7 @@ npm start
 
 ## Configuración
 
-- **Puerto del servidor**: Configurado mediante variable de entorno `PORT` (por defecto: 3001)
+- **Puerto del servidor**: Configurado mediante variable de entorno `PORT` (por defecto: 3000)
 - **Base de datos MongoDB**: Configurada mediante variable de entorno `MONGO_URI`
 - **Redis**: Configurado mediante variable de entorno `REDIS_URL` (por defecto: redis://localhost:6379)
 - **Filtrado de comentarios**: Configurado mediante variable de entorno `MAX_COMMENT_AGE_MONTHS` (por defecto: 6 meses)
@@ -170,7 +170,7 @@ npm start
 La API corre por defecto en:
 
 ```
-http://localhost:3001
+http://localhost:3000
 ```
 
 ## Características
@@ -246,7 +246,7 @@ La documentación interactiva de la API está disponible a través de Swagger UI
 
 2. Accede a la documentación en tu navegador:
    ```
-   http://localhost:3001/api-docs/
+   http://localhost:3000/api-docs/
    ```
 
 ### Características de la documentación:
