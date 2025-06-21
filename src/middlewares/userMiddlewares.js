@@ -1,27 +1,20 @@
 const User = require("../db/models/user")
+const { validateUniqueAttribute } = require('../utils/entityValidation');
 
+/**
+ * Middleware para verificar que un atributo de usuario es único
+ * @param {string} attribute - Atributo a verificar (ej: 'email', 'username')
+ * @returns {Function} - Middleware function
+ */
 const existUserByAttribute = (attribute) => {
-    return async (req, res, next) => {
-        const value = req.body[attribute];
-        if (value) {
-            const userId = req.params.id;
-            let query = { [attribute]: value };
-
-            if (userId) {
-                // Es una actualización, excluimos el usuario actual
-                query._id = { $ne: userId };
-            }
-
-            const data = await User.findOne(query);
-            if (data) {
-                return res.status(400).json({ error: `El ${attribute} ${value} ya está registrado` })
-            }
-        }
-        next()
-    }
+    return validateUniqueAttribute(User, attribute, 'usuario', 'id');
 }
 
-
+/**
+ * Middleware para verificar que un usuario existe por ID
+ * @param {Object} modelo - Modelo a verificar (debe tener userId en body)
+ * @returns {Function} - Middleware function
+ */
 const existUserModelById = (modelo) => {
     return async (req, res, next) => {
         const userId = req.body.userId;
@@ -30,7 +23,7 @@ const existUserModelById = (modelo) => {
             if (!data) {
                 return res
                     .status(404)
-                    .json({ message: `El user id ${userId} no se encuentra registrado` });
+                    .json({ error: `El usuario con ID ${userId} no se encuentra registrado` });
             }
         }
         next();

@@ -32,11 +32,7 @@ const createPostSchema = Joi.object({
 const updatePostSchema = Joi.object({
   description: Joi.string().min(1).max(2000).optional().messages({
     "string.min": "La descripción del post debe tener al menos {#limit} carácter",
-    "string.max": "La descripción del post no puede superar los {#limit} caracteres",
-  }),
-  userId: Joi.string().length(24).hex().optional().messages({
-    "string.length": "El ID del usuario debe tener 24 caracteres",
-    "string.hex": "El ID del usuario debe ser un hexadecimal válido"
+    "string.max": "La descripción del post no puede superar los {#limit} caracteres"
   }),
   tags: Joi.array().items(
     Joi.string().length(24).hex()

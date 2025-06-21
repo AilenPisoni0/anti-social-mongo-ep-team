@@ -3,8 +3,17 @@ const Post = require('../db/models/post');
 const Comment = require('../db/models/comment');
 const { redisClient } = require('../db/config/redisClient');
 
+// Helper para invalidar cachés relacionados con usuarios
+const invalidateUserCaches = async (userId = null) => {
+  if (userId) {
+    await redisClient.del(`user:${userId}`);
+  }
+  await redisClient.del('users:todos');
+  await redisClient.del('posts:todos');
+};
+
 module.exports = {
-  // POST - Crear un nuevo usuario
+  // Crear un nuevo usuario
   createUser: async (req, res) => {
     try {
       const { nickName, email } = req.body;
@@ -16,28 +25,33 @@ module.exports = {
       });
 
       await newUser.save();
-      await redisClient.del('users:todos');
+      await invalidateUserCaches();
 
-      return res.status(201).json(newUser);
+      res.status(201).json({
+        message: "Usuario creado exitosamente",
+        user: newUser
+      });
     } catch (err) {
+      if (err.code === 11000 && err.keyPattern?.nickName) {
+        return res.status(400).json({ error: 'Ya existe un usuario con ese nickName' });
+      }
+      if (err.code === 11000 && err.keyPattern?.email) {
+        return res.status(400).json({ error: 'Ya existe un usuario con ese email' });
+      }
       console.error(err);
-      return res.status(500).json({ error: 'No se pudo crear el usuario' });
+      res.status(500).json({ error: 'No se pudo crear el usuario' });
     }
   },
 
-  // GET - Obtener todos los usuarios
+  // Obtener todos los usuarios
   getAllUsers: async (req, res) => {
-    const cacheKey = 'users:todos'
+    const cacheKey = 'users:todos';
     try {
       const cached = await redisClient.get(cacheKey);
-
       if (cached) {
         console.log('Respuesta desde Redis');
         const users = JSON.parse(cached);
-        if (users.length === 0) {
-          return res.status(204).send();
-        }
-        return res.status(200).json(users);
+        return users.length === 0 ? res.status(204).send() : res.status(200).json(users);
       }
 
       const users = await User.find({ isDeleted: false }, 'nickName email createdAt updatedAt').lean();
@@ -47,23 +61,21 @@ module.exports = {
       }
 
       await redisClient.set(cacheKey, JSON.stringify(users), { EX: 300 });
-
       res.status(200).json(users);
     } catch (err) {
-      console.error("Error al obtener usuarios:", err);
-      res.status(500).json({ error: 'No se pudieron obtener los usuarios', detalles: err.message });
+      console.error(err);
+      res.status(500).json({ error: 'No se pudieron obtener los usuarios' });
     }
   },
 
-  // GET - Obtener un usuario por ID
+  // Obtener un usuario por ID
   getUserById: async (req, res) => {
+    const { id } = req.params;
+    const cacheKey = `user:${id}`;
     try {
-      const id = req.params.id;
-      const cacheKey = `user:${id}`;
-
       const cached = await redisClient.get(cacheKey);
       if (cached) {
-        console.log('Respuesta desde Redis');
+        console.log('Usuario desde Redis');
         return res.status(200).json(JSON.parse(cached));
       }
 
@@ -77,12 +89,12 @@ module.exports = {
       await redisClient.set(cacheKey, JSON.stringify(user), { EX: 300 });
       res.status(200).json(user);
     } catch (err) {
-      console.error('Error al obtener usuario:', err);
+      console.error(err);
       res.status(500).json({ error: 'No se pudo obtener el usuario' });
     }
   },
 
-  // PUT - Actualizar un usuario
+  // Actualizar un usuario
   updateUser: async (req, res) => {
     try {
       const { id } = req.params;
@@ -94,17 +106,25 @@ module.exports = {
       user.set(req.body);
 
       await user.save();
-      await redisClient.del(`user:${id}`);
-      await redisClient.del('users:todos');
+      await invalidateUserCaches(id);
 
-      res.status(201).json(user);
+      res.status(200).json({
+        message: "Usuario actualizado exitosamente",
+        user: user
+      });
     } catch (err) {
-      console.error('Error al actualizar usuario:', err);
+      if (err.code === 11000 && err.keyPattern?.nickName) {
+        return res.status(400).json({ error: 'Ya existe un usuario con ese nickName' });
+      }
+      if (err.code === 11000 && err.keyPattern?.email) {
+        return res.status(400).json({ error: 'Ya existe un usuario con ese email' });
+      }
+      console.error(err);
       res.status(500).json({ error: 'No se pudo actualizar el usuario' });
     }
   },
 
-  // DELETE - Eliminar un usuario con efecto cascada
+  // Eliminar un usuario con efecto cascada
   deleteUser: async (req, res) => {
     try {
       const { id } = req.params;
@@ -112,11 +132,13 @@ module.exports = {
       // El middleware ya eliminó los elementos asociados y verificó que el usuario existe
       await User.findByIdAndDelete(id);
 
-      await redisClient.del(`user:${id}`);
-      await redisClient.del('users:todos');
-      res.status(204).send();
+      await invalidateUserCaches(id);
+
+      res.status(200).json({
+        message: "Usuario eliminado exitosamente junto con todos sus recursos asociados"
+      });
     } catch (err) {
-      console.error('Error al eliminar usuario:', err);
+      console.error(err);
       res.status(500).json({ error: 'No se pudo eliminar el usuario' });
     }
   }

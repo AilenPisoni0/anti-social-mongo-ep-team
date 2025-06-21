@@ -2,6 +2,14 @@ const PostImage = require('../db/models/postImage');
 const Post = require('../db/models/post');
 const { redisClient } = require('../db/config/redisClient');
 
+// Helper para invalidar cachés relacionados con posts
+const invalidatePostCaches = async (postId = null) => {
+    if (postId) {
+        await redisClient.del(`post:${postId}`);
+    }
+    await redisClient.del('posts:todos');
+};
+
 module.exports = {
     // POST - Crear una nueva imagen para un post
     createPostImage: async (req, res) => {
@@ -14,12 +22,12 @@ module.exports = {
             });
 
             await newPostImage.save();
+            await invalidatePostCaches(postId);
 
-            // Limpiar cache del post
-            await redisClient.del(`post:${postId}`);
-            await redisClient.del('posts:todos');
-
-            res.status(201).json(newPostImage);
+            res.status(201).json({
+                message: "Imagen del post creada exitosamente",
+                image: newPostImage
+            });
         } catch (err) {
             console.error(err);
             res.status(500).json({ error: 'No se pudo crear la imagen del post' });
@@ -39,16 +47,15 @@ module.exports = {
 
             res.status(200).json(images);
         } catch (err) {
-            console.error('Error en getPostImages:', err);
+            console.error(err);
             res.status(500).json({ error: 'No se pudieron obtener las imágenes del post' });
         }
     },
 
     // GET - Obtener una imagen específica
     getPostImageById: async (req, res) => {
+        const { id } = req.params;
         try {
-            const { id } = req.params;
-
             const image = await PostImage.findById(id).lean();
 
             if (!image) {
@@ -57,7 +64,7 @@ module.exports = {
 
             res.status(200).json(image);
         } catch (err) {
-            console.error('Error en getPostImageById:', err);
+            console.error(err);
             res.status(500).json({ error: 'No se pudo obtener la imagen' });
         }
     },
@@ -77,13 +84,14 @@ module.exports = {
             image.isEdited = true;
             await image.save();
 
-            // Limpiar cache del post
-            await redisClient.del(`post:${image.postId}`);
-            await redisClient.del('posts:todos');
+            await invalidatePostCaches(image.postId);
 
-            res.status(200).json(image);
+            res.status(200).json({
+                message: "Imagen actualizada exitosamente",
+                image: image
+            });
         } catch (err) {
-            console.error('Error en updatePostImage:', err);
+            console.error(err);
             res.status(500).json({ error: 'No se pudo actualizar la imagen' });
         }
     },
@@ -101,13 +109,13 @@ module.exports = {
             const postId = image.postId;
             await PostImage.findByIdAndDelete(id);
 
-            // Limpiar cache del post
-            await redisClient.del(`post:${postId}`);
-            await redisClient.del('posts:todos');
+            await invalidatePostCaches(postId);
 
-            res.status(204).send();
+            res.status(200).json({
+                message: "Imagen eliminada exitosamente"
+            });
         } catch (err) {
-            console.error('Error en deletePostImage:', err);
+            console.error(err);
             res.status(500).json({ error: 'No se pudo eliminar la imagen' });
         }
     }

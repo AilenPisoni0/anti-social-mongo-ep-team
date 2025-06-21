@@ -13,22 +13,22 @@ router.post('/',
 );
 
 router.get('/:id',
-    genericMiddleware.validateId,
-    genericMiddleware.existModelById(Tag),
+    genericMiddleware.validateMongoId,
+    genericMiddleware.createEntityExistsValidator(Tag, 'Tag'),
     tagController.getTagById
 );
 
 router.put('/:id',
-    genericMiddleware.validateId,
-    genericMiddleware.existModelById(Tag),
+    genericMiddleware.validateMongoId,
+    genericMiddleware.createEntityExistsValidator(Tag, 'Tag'),
     tagMiddleware.existTagByName(),
     genericMiddleware.schemaValidator(UpdateTagSchema),
     tagController.updateTag
 );
 
 router.delete('/:id',
-    genericMiddleware.validateId,
-    genericMiddleware.existModelById(Tag),
+    genericMiddleware.validateMongoId,
+    genericMiddleware.createEntityExistsValidator(Tag, 'Tag'),
     tagController.deleteTag
 );
 

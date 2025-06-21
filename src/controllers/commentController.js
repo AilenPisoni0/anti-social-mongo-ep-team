@@ -2,6 +2,17 @@ const Comment = require('../db/models/comment');
 const User = require('../db/models/user');
 const { redisClient } = require('../db/config/redisClient');
 
+// Helper para invalidar cachés relacionados con comentarios
+const invalidateCommentCaches = async (commentId = null, postId = null) => {
+  if (commentId) {
+    await redisClient.del(`comment:${commentId}`);
+  }
+  if (postId) {
+    await redisClient.del(`comments:post:${postId}`);
+  }
+  await redisClient.del('comments:todos');
+};
+
 module.exports = {
   // Crear un nuevo comentario
   createComment: async (req, res) => {
@@ -17,9 +28,7 @@ module.exports = {
 
       await newComment.save();
 
-      // Invalido caches relevantes
-      await redisClient.del('comments:todos');
-      await redisClient.del(`comments:post:${postId}`);
+      await invalidateCommentCaches(null, postId);
 
       const commentWithUser = await Comment.findById(newComment._id)
         .populate({
@@ -45,12 +54,9 @@ module.exports = {
 
       const cached = await redisClient.get(cacheKey);
       if (cached) {
-        console.log('Respuesta desde Redis - comentarios por post');
+        console.log('Comentarios del post desde Redis');
         const comments = JSON.parse(cached);
-        if (comments.length === 0) {
-          return res.status(204).send();
-        }
-        return res.status(200).json(comments);
+        return comments.length === 0 ? res.status(204).send() : res.status(200).json(comments);
       }
 
       const maxAgeMonths = parseInt(process.env.MAX_COMMENT_AGE_MONTHS) || 6;
@@ -69,11 +75,10 @@ module.exports = {
       }
 
       await redisClient.set(cacheKey, JSON.stringify(comments), { EX: 300 });
-
       res.status(200).json(comments);
     } catch (err) {
       console.error(err);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: 'No se pudieron obtener los comentarios del post' });
     }
   },
 
@@ -83,12 +88,9 @@ module.exports = {
     try {
       const cached = await redisClient.get(cacheKey);
       if (cached) {
-        console.log('Respuesta desde Redis - todos los comentarios');
+        console.log('Todos los comentarios desde Redis');
         const comments = JSON.parse(cached);
-        if (comments.length === 0) {
-          return res.status(204).send();
-        }
-        return res.status(200).json(comments);
+        return comments.length === 0 ? res.status(204).send() : res.status(200).json(comments);
       }
 
       const comments = await Comment.find()
@@ -100,23 +102,21 @@ module.exports = {
       }
 
       await redisClient.set(cacheKey, JSON.stringify(comments), { EX: 300 });
-
       res.status(200).json(comments);
     } catch (err) {
       console.error(err);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: 'No se pudieron obtener los comentarios' });
     }
   },
 
   // Obtener un comentario por ID
   getCommentById: async (req, res) => {
+    const { id } = req.params;
+    const cacheKey = `comment:${id}`;
     try {
-      const { id } = req.params;
-      const cacheKey = `comment:${id}`;
-
       const cached = await redisClient.get(cacheKey);
       if (cached) {
-        console.log('Respuesta desde Redis - comentario por ID');
+        console.log('Comentario desde Redis');
         return res.status(200).json(JSON.parse(cached));
       }
 
@@ -128,7 +128,6 @@ module.exports = {
       }
 
       await redisClient.set(cacheKey, JSON.stringify(comment), { EX: 300 });
-
       res.status(200).json(comment);
     } catch (err) {
       console.error(err);
@@ -140,18 +139,15 @@ module.exports = {
   updateComment: async (req, res) => {
     try {
       const { id } = req.params;
-      const { content, postId, userId } = req.body;
+      const { content, createdAt } = req.body;
 
       const updates = {};
       if (content) {
         updates.content = content;
         updates.isEdited = true;
       }
-      if (postId) {
-        updates.postId = postId;
-      }
-      if (userId) {
-        updates.userId = userId;
+      if (createdAt) {
+        updates.createdAt = new Date(createdAt);
       }
       updates.updatedAt = new Date();
 
@@ -165,14 +161,9 @@ module.exports = {
         return res.status(404).json({ error: 'Comentario no encontrado' });
       }
 
-      // Invalido caches relevantes
-      await redisClient.del(`comment:${id}`);
-      await redisClient.del('comments:todos');
-      if (postId) {
-        await redisClient.del(`comments:post:${postId}`);
-      }
+      await invalidateCommentCaches(id, updatedComment.postId);
 
-      res.status(201).json({
+      res.status(200).json({
         message: "Comentario actualizado exitosamente",
         comment: updatedComment
       });
@@ -193,17 +184,13 @@ module.exports = {
       }
 
       const postId = comment.postId;
-
       await comment.deleteOne();
 
-      // Invalido caches relevantes
-      await redisClient.del(`comment:${id}`);
-      await redisClient.del('comments:todos');
-      if (postId) {
-        await redisClient.del(`comments:post:${postId}`);
-      }
+      await invalidateCommentCaches(id, postId);
 
-      res.status(204).send();
+      res.status(200).json({
+        message: "Comentario eliminado exitosamente"
+      });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'No se pudo eliminar el comentario' });

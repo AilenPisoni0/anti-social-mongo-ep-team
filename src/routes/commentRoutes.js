@@ -10,8 +10,8 @@ const User = require("../db/models/user");
 // Crear comentario
 router.post('/',
   genericMiddleware.schemaValidator(CommentSchema),
-  genericMiddleware.existModelByUserIdInBody(User),
-  genericMiddleware.existModelByPostIdInBody(Post),
+  genericMiddleware.createUserExistsValidator(),
+  genericMiddleware.createPostExistsValidator(),
   commentController.createComment
 );
 
@@ -22,30 +22,31 @@ router.get('/',
 
 // Obtener comentarios de un post específico
 router.get('/post/:id',
-  genericMiddleware.validateId,
-  genericMiddleware.existModelById(Post),
+  genericMiddleware.validateMongoId,
+  genericMiddleware.createEntityExistsValidator(Post, 'Post'),
   commentController.getPostComments
 );
 
 // Obtener comentario por ID
 router.get('/:id',
-  genericMiddleware.validateId,
-  genericMiddleware.existModelById(Comment),
+  genericMiddleware.validateMongoId,
+  genericMiddleware.createEntityExistsValidator(Comment, 'Comentario'),
   commentController.getCommentById
 );
 
 // Actualizar comentario
 router.put('/:id',
-  genericMiddleware.validateId,
-  genericMiddleware.existModelById(Comment),
+  genericMiddleware.validateMongoId,
+  genericMiddleware.createEntityExistsValidator(Comment, 'Comentario'),
+  commentMiddleware.validateUpdateFields,
   genericMiddleware.schemaValidator(CommentUpdateSchema),
   commentController.updateComment
 );
 
 // Eliminar comentario
 router.delete('/:id',
-  genericMiddleware.validateId,
-  genericMiddleware.existModelById(Comment),
+  genericMiddleware.validateMongoId,
+  genericMiddleware.createEntityExistsValidator(Comment, 'Comentario'),
   commentController.deleteComment
 );
 

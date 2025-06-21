@@ -7,6 +7,14 @@ const User = require('../db/models/user');
 const { redisClient } = require('../db/config/redisClient');
 const { uploadMiddleware } = require("../middlewares");
 
+// Helper para invalidar cachés relacionados con posts
+const invalidatePostCaches = async (postId = null) => {
+  if (postId) {
+    await redisClient.del(`post:${postId}`);
+  }
+  await redisClient.del('posts:todos');
+};
+
 // Helper para obtener posts con formato unificado
 const getPostWithPopulatedData = async (postId) => {
   const maxAgeMonths = parseInt(process.env.MAX_COMMENT_AGE_MONTHS) || 6;
@@ -75,12 +83,15 @@ module.exports = {
       // Obtener el post con formato unificado
       const postWithData = await getPostWithPopulatedData(newPost._id);
 
-      await redisClient.del('posts:todos');
+      await invalidatePostCaches();
 
-      res.status(201).json(postWithData);
+      res.status(201).json({
+        message: "Post creado exitosamente",
+        post: postWithData
+      });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ error: 'Error al crear la publicación' });
+      res.status(500).json({ error: 'No se pudo crear el post' });
     }
   },
 
@@ -89,12 +100,9 @@ module.exports = {
     try {
       const cached = await redisClient.get(cacheKey);
       if (cached) {
-        console.log('[Redis] Post desde caché');
+        console.log('Posts desde Redis');
         const posts = JSON.parse(cached);
-        if (posts.length === 0) {
-          return res.status(204).send();
-        }
-        return res.status(200).json(posts);
+        return posts.length === 0 ? res.status(204).send() : res.status(200).json(posts);
       }
 
       const posts = await getPostsWithPopulatedData();
@@ -106,8 +114,8 @@ module.exports = {
       await redisClient.set(cacheKey, JSON.stringify(posts), { EX: 300 });
       res.status(200).json(posts);
     } catch (err) {
-      console.error("Error en getAllPosts:", err);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      console.error(err);
+      res.status(500).json({ error: 'No se pudieron obtener los posts' });
     }
   },
 
@@ -117,20 +125,20 @@ module.exports = {
     try {
       const cached = await redisClient.get(cacheKey);
       if (cached) {
-        console.log('[Redis] Post desde caché');
+        console.log('Post desde Redis');
         return res.status(200).json(JSON.parse(cached));
       }
 
       const post = await getPostWithPopulatedData(id);
 
       if (!post) {
-        return res.status(404).json({ message: 'Post no encontrado' });
+        return res.status(404).json({ error: 'Post no encontrado' });
       }
 
       await redisClient.set(cacheKey, JSON.stringify(post), { EX: 300 });
       res.status(200).json(post);
     } catch (err) {
-      console.error('Error en getPostById:', err);
+      console.error(err);
       res.status(500).json({ error: 'No se pudo obtener el post' });
     }
   },
@@ -164,12 +172,14 @@ module.exports = {
       // Obtener el post actualizado con formato unificado
       const updatedPost = await getPostWithPopulatedData(post._id);
 
-      await redisClient.del(`post:${req.params.id}`);
-      await redisClient.del('posts:todos');
+      await invalidatePostCaches(req.params.id);
 
-      res.status(201).json(updatedPost);
+      res.status(200).json({
+        message: "Post actualizado exitosamente",
+        post: updatedPost
+      });
     } catch (err) {
-      console.error('Error en updatePost:', err);
+      console.error(err);
       res.status(500).json({ error: 'No se pudo actualizar el post' });
     }
   },
@@ -179,14 +189,13 @@ module.exports = {
       // El middleware ya eliminó los elementos asociados y verificó que el post existe
       await Post.findByIdAndDelete(req.params.id);
 
-      await redisClient.del(`post:${req.params.id}`);
-      await redisClient.del('posts:todos');
+      await invalidatePostCaches(req.params.id);
 
       res.status(200).json({
-        message: "Publicación eliminada exitosamente junto con todos sus recursos asociados"
+        message: "Post eliminado exitosamente junto con todos sus recursos asociados"
       });
     } catch (err) {
-      console.error('Error en deletePost:', err);
+      console.error(err);
       res.status(500).json({ error: 'No se pudo eliminar el post' });
     }
   },
@@ -197,12 +206,12 @@ module.exports = {
       const images = await PostImage.find({ postId: id });
 
       if (!images || images.length === 0) {
-        return res.status(404).json({ message: 'Imágenes no encontradas' });
+        return res.status(204).send();
       }
 
       res.status(200).json(images);
     } catch (err) {
-      console.error('Error en getPostImages:', err);
+      console.error(err);
       res.status(500).json({ error: 'No se pudieron obtener las imágenes del post' });
     }
   },
@@ -222,12 +231,14 @@ module.exports = {
       });
       await newImage.save();
 
-      await redisClient.del(`post:${id}`);
-      await redisClient.del('posts:todos');
+      await invalidatePostCaches(id);
 
-      res.status(201).json(newImage);
+      res.status(201).json({
+        message: "Imagen agregada exitosamente al post",
+        image: newImage
+      });
     } catch (err) {
-      console.error('Error en addImageFromPost:', err);
+      console.error(err);
       res.status(500).json({ error: 'No se pudo agregar la imagen' });
     }
   },
@@ -258,12 +269,14 @@ module.exports = {
       image.url = `/uploads/images/${file.filename}`;
       await image.save();
 
-      await redisClient.del(`post:${id}`);
-      await redisClient.del('posts:todos');
+      await invalidatePostCaches(id);
 
-      res.status(200).json(image);
+      res.status(200).json({
+        message: "Imagen actualizada exitosamente",
+        image: image
+      });
     } catch (err) {
-      console.error('Error en updateImageFromPost:', err);
+      console.error(err);
       res.status(500).json({ error: 'No se pudo actualizar la imagen' });
     }
   },
@@ -280,15 +293,14 @@ module.exports = {
 
       await PostImage.findByIdAndDelete(imageId);
 
-      await redisClient.del(`post:${id}`);
-      await redisClient.del('posts:todos');
+      await invalidatePostCaches(id);
 
       res.status(200).json({
         message: "Imagen eliminada exitosamente"
       });
     } catch (err) {
-      console.error('Error en removeImageFromPost:', err);
-      res.status(500).json({ error: 'Error al eliminar la imagen' });
+      console.error(err);
+      res.status(500).json({ error: 'No se pudo eliminar la imagen' });
     }
   },
 
@@ -299,7 +311,7 @@ module.exports = {
 
       const post = await Post.findById(id);
       if (!post) {
-        return res.status(404).json({ error: 'Publicación no encontrada' });
+        return res.status(404).json({ error: 'Post no encontrado' });
       }
 
       await PostImage.deleteMany({ postId: id });
@@ -314,16 +326,15 @@ module.exports = {
 
       const updatedPost = await getPostWithPopulatedData(id);
 
-      await redisClient.del(`post:${id}`);
-      await redisClient.del('posts:todos');
+      await invalidatePostCaches(id);
 
       res.status(200).json({
-        message: "Publicación actualizada exitosamente",
+        message: "Imágenes del post actualizadas exitosamente",
         post: updatedPost
       });
     } catch (err) {
-      console.error('Error en updatePostImages:', err);
-      res.status(500).json({ error: 'Error al actualizar la publicación' });
+      console.error(err);
+      res.status(500).json({ error: 'No se pudieron actualizar las imágenes del post' });
     }
   }
 };

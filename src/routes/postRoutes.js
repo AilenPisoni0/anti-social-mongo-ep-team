@@ -20,8 +20,8 @@ router.post('/',
 router.get('/:id', postController.getPostById);
 
 router.put('/:id',
-    genericMiddleware.validateId,
-    genericMiddleware.existModelById(Post),
+    genericMiddleware.validateMongoId,
+    genericMiddleware.createEntityExistsValidator(Post, 'Post'),
     fileValidationMiddleware.validateImageFiles,
     genericMiddleware.schemaValidator(updatePostSchema),
     userMiddleware.existUserModelById(User),
@@ -30,42 +30,42 @@ router.put('/:id',
 
 //DELETE con efecto cascada
 router.delete('/:id',
-    genericMiddleware.validateId,
+    genericMiddleware.validateMongoId,
     postMiddleware.deletePostWithCascade,
     postController.deletePost
 );
 
 router.get('/:id/images',
-    genericMiddleware.validateId,
-    genericMiddleware.existModelById(Post),
+    genericMiddleware.validateMongoId,
+    genericMiddleware.createEntityExistsValidator(Post, 'Post'),
     postController.getPostImages
 );
 
 router.post('/:id/images',
-    genericMiddleware.validateId,
-    genericMiddleware.existModelById(Post),
+    genericMiddleware.validateMongoId,
+    genericMiddleware.createEntityExistsValidator(Post, 'Post'),
     uploadMiddleware.upload.single('imagen'),
     uploadMiddleware.handleUploadError,
     postController.addImageFromPost
 );
 
 router.delete('/:id/images/:imageId',
-    genericMiddleware.validateId,
-    genericMiddleware.existModelById(Post),
+    genericMiddleware.validateMongoId,
+    genericMiddleware.createEntityExistsValidator(Post, 'Post'),
     postImageMiddleware.existImageInPost(),
     postController.removeImageFromPost
 );
 
 router.put('/:id/images',
-    genericMiddleware.validateId,
-    genericMiddleware.existModelById(Post),
+    genericMiddleware.validateMongoId,
+    genericMiddleware.createEntityExistsValidator(Post, 'Post'),
     fileValidationMiddleware.validateImageFiles,
     postController.updatePostImages
 );
 
 router.put('/:id/images/:imageId',
-    genericMiddleware.validateId,
-    genericMiddleware.existModelById(Post),
+    genericMiddleware.validateMongoId,
+    genericMiddleware.createEntityExistsValidator(Post, 'Post'),
     postImageMiddleware.existImageInPost(),
     uploadMiddleware.upload.single('imagen'),
     uploadMiddleware.handleUploadError,
@@ -74,8 +74,8 @@ router.put('/:id/images/:imageId',
 
 // Rutas para comentarios de posts
 router.get('/:id/comments',
-    genericMiddleware.validateId,
-    genericMiddleware.existModelById(Post),
+    genericMiddleware.validateMongoId,
+    genericMiddleware.createEntityExistsValidator(Post, 'Post'),
     commentController.getPostComments
 );
 

@@ -9,11 +9,24 @@ const tagSchema = new Schema({
     trim: true
   }
 }, {
-
   timestamps: true
 });
 
-// Índice para mejorar el rendimiento de las consultas por nombre de tag.
-//tagSchema.index({ name: 1 }); (Lo comenté porque me salía un warning)
+tagSchema.set('toJSON', {
+  virtuals: true,
+  transform: (_, ret) => {
+    ret.id = ret._id;
+    delete ret._id;
+    delete ret.__v;
+  }
+});
+tagSchema.set('toObject', {
+  virtuals: true,
+  transform: (_, ret) => {
+    ret.id = ret._id;
+    delete ret._id;
+    delete ret.__v;
+  }
+});
 
 module.exports = mongoose.model('Tag', tagSchema);
