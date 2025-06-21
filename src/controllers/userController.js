@@ -20,8 +20,7 @@ module.exports = {
 
       const newUser = new User({
         nickName,
-        email,
-        isEdited: false
+        email
       });
 
       await newUser.save();
@@ -102,7 +101,6 @@ module.exports = {
       // El middleware ya verificó que el usuario existe
       const user = await User.findById(id);
 
-      user.isEdited = true;
       user.set(req.body);
 
       await user.save();

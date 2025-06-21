@@ -4,10 +4,6 @@ const CommentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  isEdited: {
-    type: Boolean,
-    default: false
-  },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

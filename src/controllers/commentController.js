@@ -22,8 +22,7 @@ module.exports = {
       const newComment = new Comment({
         content,
         userId,
-        postId,
-        isEdited: false
+        postId
       });
 
       await newComment.save();
@@ -144,7 +143,6 @@ module.exports = {
       const updates = {};
       if (content) {
         updates.content = content;
-        updates.isEdited = true;
       }
       if (createdAt) {
         updates.createdAt = new Date(createdAt);

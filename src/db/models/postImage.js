@@ -11,10 +11,6 @@ const postImageSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Post',
         required: true
-    },
-    isEdited: {
-        type: Boolean,
-        default: false
     }
 }, {
     timestamps: true

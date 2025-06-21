@@ -81,7 +81,6 @@ module.exports = {
             }
 
             image.url = url;
-            image.isEdited = true;
             await image.save();
 
             await invalidatePostCaches(image.postId);

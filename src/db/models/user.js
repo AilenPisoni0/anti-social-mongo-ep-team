@@ -12,10 +12,6 @@ const UserSchema = new mongoose.Schema({
     unique: true,
     match: /.+\@.+\..+/
   },
-  isEdited: {
-    type: Boolean,
-    default: false
-  },
   isDeleted: {
     type: Boolean,
     default: false
