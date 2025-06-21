@@ -325,59 +325,5 @@ module.exports = {
       console.error('Error en updatePostImages:', err);
       res.status(500).json({ error: 'Error al actualizar la publicación' });
     }
-  },
-
-  getPostTags: async (req, res) => {
-    try {
-      const { id } = req.params;
-      const post = await Post.findById(id).populate('tags', 'name');
-
-      if (!post || !post.tags) {
-        return res.status(404).json({ message: 'Tags no encontrados' });
-      }
-
-      res.status(200).json(post.tags);
-    } catch (err) {
-      console.error('Error en getPostTags:', err);
-      res.status(500).json({ error: 'No se pudieron obtener los tags del post' });
-    }
-  },
-
-  addTagFromPost: async (req, res) => {
-    try {
-      const { id, tagId } = req.params;
-      const post = await Post.findById(id);
-
-      if (!post.tags.includes(tagId)) {
-        post.tags.push(tagId);
-        await post.save();
-      }
-
-      await redisClient.del(`post:${id}`);
-      await redisClient.del('posts:todos');
-
-      res.status(200).json(post.tags);
-    } catch (err) {
-      console.error('Error en addTagFromPost:', err);
-      res.status(500).json({ error: 'No se pudo agregar el tag' });
-    }
-  },
-
-  removeTagFromPost: async (req, res) => {
-    try {
-      const { id, tagId } = req.params;
-      const post = await Post.findById(id);
-
-      post.tags = post.tags.filter(tag => tag.toString() !== tagId);
-      await post.save();
-
-      await redisClient.del(`post:${id}`);
-      await redisClient.del('posts:todos');
-
-      res.status(204).send();
-    } catch (err) {
-      console.error('Error en removeTagFromPost:', err);
-      res.status(500).json({ error: 'No se pudo eliminar el tag' });
-    }
   }
 };

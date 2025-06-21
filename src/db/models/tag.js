@@ -13,7 +13,7 @@ const tagSchema = new Schema({
   timestamps: true
 });
 
-// Índice para mejorar el rendimiento de las consultas por nombre de etiqueta.
+// Índice para mejorar el rendimiento de las consultas por nombre de tag.
 //tagSchema.index({ name: 1 }); (Lo comenté porque me salía un warning)
 
 module.exports = mongoose.model('Tag', tagSchema);
