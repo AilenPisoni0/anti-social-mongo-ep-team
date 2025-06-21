@@ -33,20 +33,16 @@ const validateEntityExists = (Model, entityName, paramName = 'id', attachToReq =
     return async (req, res, next) => {
         try {
             const id = req.params[paramName] || req.body[paramName];
-
             if (!id) {
                 return res.status(400).json(formatError(`Se requiere el ${paramName}`));
             }
-
             const entity = await Model.findById(id);
             if (!entity) {
                 return res.status(404).json(formatError(`${entityName} no encontrado`, 404));
             }
-
             if (attachToReq) {
                 req[entityName.toLowerCase()] = entity;
             }
-
             next();
         } catch (error) {
             const errorResponse = handleMongoError(error, entityName);

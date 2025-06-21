@@ -151,7 +151,7 @@ module.exports = {
 
       res.status(200).json(updatedComment);
     } catch (err) {
-      console.error(err);
+      console.error('Error en updateComment:', err);
       res.status(500).json({ error: 'No se pudo actualizar el comentario' });
     }
   },
