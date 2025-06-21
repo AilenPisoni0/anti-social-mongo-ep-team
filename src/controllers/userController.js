@@ -1,7 +1,7 @@
 const User = require('../db/models/user');
 const Post = require('../db/models/post');
 const Comment = require('../db/models/comment');
-const { redisClient } = require('../db/config/redisClient');
+const { redisClient, CACHE_TTL } = require('../db/config/redisClient');
 
 // Helper para invalidar cachés relacionados con usuarios
 const invalidateUserCaches = async (userId = null) => {
@@ -56,7 +56,7 @@ module.exports = {
         return res.status(204).send();
       }
 
-      await redisClient.set(cacheKey, JSON.stringify(users), { EX: 300 });
+      await redisClient.set(cacheKey, JSON.stringify(users), { EX: CACHE_TTL.USERS });
       res.status(200).json(users);
     } catch (err) {
       console.error(err);
@@ -82,7 +82,7 @@ module.exports = {
         return res.status(404).json({ error: 'Usuario no encontrado' });
       }
 
-      await redisClient.set(cacheKey, JSON.stringify(user), { EX: 300 });
+      await redisClient.set(cacheKey, JSON.stringify(user), { EX: CACHE_TTL.USERS });
       res.status(200).json(user);
     } catch (err) {
       console.error(err);

@@ -4,44 +4,33 @@
 
 API REST para una red social antisocial. Desarrollada con Node.js, Express y MongoDB.
 
-## Configuración
+## Instalación
 
-### Instalar dependencias:
 ```bash
+# Clonar repositorio
+git clone <repository-url>
+cd anti-social-mongo-ep-team
+
+# Instalar dependencias
 npm install
-```
 
-### Configurar variables de entorno:
-Crear un archivo `.env` con las siguientes variables:
-```env
-# Configuración del servidor
-PORT=3001
-NODE_ENV=development
-
-# Base de datos MongoDB
-MONGO_URI=mongodb://admin:admin123@localhost:27017/antisocial_db?authSource=admin
-
-# Redis
-REDIS_URL=redis://localhost:6379
-
-# Configuración de comentarios
-MAX_COMMENT_AGE_MONTHS=6
-```
-
-### Crear y poblar la base de datos:
-```bash
-# Ejecutar seeders para crear datos de prueba
-npm run seed
-```
-
-### Iniciar servicios con Docker:
-```bash
-# Iniciar MongoDB y Redis
+# Iniciar servicios con Docker
 docker-compose up -d
+
+# Ejecutar seeders para datos de prueba
+npm run seed
 
 # Iniciar servidor
 npm start
 ```
+
+## Configuración
+
+- **Puerto del servidor**: Configurado mediante variable de entorno `PORT` (por defecto: 3001)
+- **Base de datos MongoDB**: Configurada mediante variable de entorno `MONGO_URI`
+- **Redis**: Configurado mediante variable de entorno `REDIS_URL` (por defecto: redis://localhost:6379)
+- **Filtrado de comentarios**: Configurado mediante variable de entorno `MAX_COMMENT_AGE_MONTHS` (por defecto: 6 meses)
+- **Entorno**: Configurado mediante variable de entorno `NODE_ENV` (por defecto: development)
 
 ## Endpoints
 
@@ -186,14 +175,14 @@ http://localhost:3001
 
 ## Características
 
-- ✅ Gestión de usuarios con nickName y email únicos
-- ✅ Publicaciones con imágenes y tags
-- ✅ Sistema de comentarios con filtrado por antigüedad configurable
-- ✅ Hard delete implementado con cascada apropiada
-- ✅ Documentación completa con Swagger
-- ✅ Caché con Redis para optimizar consultas
-- ✅ Validaciones robustas con Joi
-- ✅ Manejo de errores consistente
+- Gestión de usuarios con nickName y email únicos
+- Publicaciones con imágenes y tags
+- Sistema de comentarios con filtrado por antigüedad configurable
+- Hard delete implementado con cascada apropiada
+- Documentación completa con Swagger
+- Caché con Redis para optimizar consultas
+- Validaciones robustas con Joi
+- Manejo de errores consistente
 
 ## Tecnologías
 
@@ -244,57 +233,6 @@ http://localhost:3001
 - Hard delete
 - Timestamps automáticos
 
-### Relaciones
-
-- **users → posts**: Uno a muchos (1:N)
-- **users → comments**: Uno a muchos (1:N)
-- **posts → comments**: Uno a muchos (1:N)
-- **posts → post_images**: Uno a muchos (1:N)
-- **posts ↔ tags**: Muchos a muchos (N:M)
-
-## Configuración
-
-### Variables de entorno necesarias en `.env`:
-
-```env
-# Server Configuration
-PORT=3001
-NODE_ENV=development
-
-# Database Configuration
-MONGO_URI=mongodb://admin:admin123@localhost:27017/antisocial_db?authSource=admin
-
-# Redis Configuration
-REDIS_URL=redis://localhost:6379
-
-# Application Settings
-MAX_COMMENT_AGE_MONTHS=6
-```
-
-## Instalación
-
-```bash
-# Clonar repositorio
-git clone <repository-url>
-cd anti-social-mongo-ep-team
-
-# Instalar dependencias
-npm install
-
-# Configurar variables de entorno
-cp .env.example .env
-# Editar .env con tus configuraciones
-
-# Iniciar servicios con Docker
-docker-compose up -d
-
-# Ejecutar seeders para datos de prueba
-npm run seed
-
-# Iniciar servidor
-npm start
-```
-
 ## Documentación de la API (Swagger)
 
 La documentación interactiva de la API está disponible a través de Swagger UI.
@@ -313,23 +251,23 @@ La documentación interactiva de la API está disponible a través de Swagger UI
 
 ### Características de la documentación:
 
-- ✅ Todos los endpoints documentados
-- ✅ Schemas detallados para cada entidad
-- ✅ Ejemplos de requests y responses
-- ✅ Códigos de estado HTTP apropiados
-- ✅ Validaciones y patrones especificados
-- ✅ Interfaz interactiva para probar endpoints
+- Todos los endpoints documentados
+- Schemas detallados para cada entidad
+- Ejemplos de requests y responses
+- Códigos de estado HTTP apropiados
+- Validaciones y patrones especificados
+- Interfaz interactiva para probar endpoints
 
 ## Características de Implementación
 
-- ✅ **Hard delete** con cascada apropiada
-- ✅ **Validaciones** con Joi schemas
-- ✅ **Middlewares** genéricos para validaciones comunes
-- ✅ **Filtrado automático** de comentarios antiguos
-- ✅ **Caché con Redis** para optimizar consultas
-- ✅ **Relaciones pobladas** automáticamente en posts
-- ✅ **Manejo de errores** consistente
-- ✅ **Variables de entorno** configurables
+- **Hard delete** con cascada apropiada
+- **Validaciones** con Joi schemas
+- **Middlewares** genéricos para validaciones comunes
+- **Filtrado automático** de comentarios antiguos
+- **Caché con Redis** para optimizar consultas
+- **Relaciones pobladas** automáticamente en posts
+- **Manejo de errores** consistente
+- **Variables de entorno** configurables
 
 ## Colecciones de Prueba
 
@@ -354,23 +292,33 @@ El proyecto incluye colecciones de Postman para facilitar las pruebas:
 
 ## Optimización con Redis
 
-El sistema implementa caché con Redis para optimizar las consultas:
+El sistema implementa caché con Redis para optimizar las consultas. El tiempo de vida (TTL) de la caché depende del tipo de dato:
+
+### TTL por tipo de dato:
+- **Users:** 30 minutos (cambian poco)
+- **Tags:** 30 minutos (cambian poco)
+- **Post Images:** 30 minutos (URLs estáticas)
+- **Posts:** 10 minutos (cambian moderadamente)
+- **Comments:** 2 minutos (cambian frecuentemente)
 
 ### Beneficios:
-- ✅ **Reducción significativa** de consultas a la base de datos
-- ✅ **Mejor tiempo de respuesta** para lecturas frecuentes
-- ✅ **Menor carga** en la base de datos
-- ✅ **TTL configurable** según el tipo de datos
+- Reducción significativa de consultas a la base de datos
+- Mejor tiempo de respuesta para lecturas frecuentes
+- Menor carga en la base de datos
 
-### Estrategia de caché:
-- **Posts**: Caché de 5 minutos (datos que cambian poco)
-- **Users**: Caché de 5 minutos
-- **Tags**: Caché de 5 minutos
-- **Comments**: Sin caché (datos que cambian frecuentemente)
+### Estrategia para optimizar el acceso a información de posts que no varía frecuentemente
 
-### Invalidación automática:
-- Al crear/actualizar/eliminar entidades se invalidan los cachés relacionados
-- Mantiene consistencia de datos
+Para optimizar las consultas a posts que no varían frecuentemente, podemos implementar una estrategia de caché usando Redis.
+
+Esta implementación ofrece:
+
+- Reducción significativa de consultas a la base de datos
+- Mejor tiempo de respuesta para lecturas frecuentes
+- Menor carga en la base de datos
+
+Consideración adicional:
+
+- Configurar un TTL (Time To Live) apropiado según el caso de uso. Por ejemplo, el TTL de los comments debería ser más corto que el de la información del usuario, ya que los comentarios cambian mucho más seguido.
 
 ## Estructura del Proyecto
 
@@ -399,14 +347,42 @@ npm run dev        # Iniciar servidor en desarrollo con nodemon
 npm run seed       # Ejecutar seeders para crear datos de prueba
 ```
 
-## Contribución
+## Bonus
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+### ¿Cómo modelar que un usuario pueda "seguir" a otros usuarios y ser seguido por muchos? (Followers)
 
-## Licencia
+Para implementar la funcionalidad de seguidores (followers) en MongoDB, se recomienda agregar campos de referencia en el modelo de usuario:
 
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+- **followers:** Array de ObjectId de usuarios que siguen a este usuario.
+- **following:** Array de ObjectId de usuarios a los que este usuario sigue.
+
+Ejemplo de esquema:
+
+```js
+const userSchema = new mongoose.Schema({
+  nickName: { type: String, unique: true, required: true },
+  email: { type: String, unique: true, required: true },
+  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+});
+```
+
+Esto permite:
+- Consultar fácilmente los seguidores y seguidos de un usuario.
+- Implementar endpoints como `/users/:id/followers` y `/users/:id/following`.
+- Agregar o quitar seguidores de manera eficiente usando operadores de MongoDB (`$addToSet`, `$pull`).
+
+### Estrategia para optimizar el acceso a información de posts que no varía frecuentemente
+
+Para optimizar las consultas a posts que no varían frecuentemente, podemos implementar una estrategia de caché usando Redis.
+
+Esta implementación ofrece:
+
+- Reducción significativa de consultas a la base de datos
+- Mejor tiempo de respuesta para lecturas frecuentes
+- Menor carga en la base de datos
+
+Consideración adicional:
+
+- Configurar un TTL (Time To Live) apropiado según el caso de uso. Por ejemplo, el TTL de los comments debería ser más corto que el de la información del usuario, ya que los comentarios cambian mucho más seguido.
+

@@ -4,7 +4,7 @@ const PostImage = require('../db/models/postImage');
 const Tag = require('../db/models/tag');
 const Comment = require('../db/models/comment');
 const User = require('../db/models/user');
-const { redisClient } = require('../db/config/redisClient');
+const { redisClient, CACHE_TTL } = require('../db/config/redisClient');
 
 // Helper para invalidar cachés relacionados con posts
 const invalidatePostCaches = async (postId = null) => {
@@ -104,7 +104,7 @@ module.exports = {
         return res.status(204).send();
       }
 
-      await redisClient.set(cacheKey, JSON.stringify(posts), { EX: 300 });
+      await redisClient.set(cacheKey, JSON.stringify(posts), { EX: CACHE_TTL.POSTS });
       res.status(200).json(posts);
     } catch (err) {
       console.error(err);
@@ -128,7 +128,7 @@ module.exports = {
         return res.status(404).json({ error: 'Post no encontrado' });
       }
 
-      await redisClient.set(cacheKey, JSON.stringify(post), { EX: 300 });
+      await redisClient.set(cacheKey, JSON.stringify(post), { EX: CACHE_TTL.POSTS });
       res.status(200).json(post);
     } catch (err) {
       console.error(err);

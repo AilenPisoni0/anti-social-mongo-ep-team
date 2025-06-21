@@ -1,5 +1,5 @@
 const Tag = require('../db/models/tag');
-const { redisClient } = require('../db/config/redisClient');
+const { redisClient, CACHE_TTL } = require('../db/config/redisClient');
 
 // Helper para invalidar cachés relacionados con tags
 const invalidateTagCaches = async (tagId = null) => {
@@ -47,7 +47,7 @@ module.exports = {
         return res.status(204).send();
       }
 
-      await redisClient.set(cacheKey, JSON.stringify(tags), { EX: 300 });
+      await redisClient.set(cacheKey, JSON.stringify(tags), { EX: CACHE_TTL.TAGS });
       res.status(200).json(tags);
     } catch (err) {
       console.error(err);
@@ -72,7 +72,7 @@ module.exports = {
         return res.status(404).json({ error: 'Tag no encontrado' });
       }
 
-      await redisClient.set(cacheKey, JSON.stringify(tag), { EX: 300 });
+      await redisClient.set(cacheKey, JSON.stringify(tag), { EX: CACHE_TTL.TAGS });
       res.status(200).json(tag);
     } catch (err) {
       console.error(err);

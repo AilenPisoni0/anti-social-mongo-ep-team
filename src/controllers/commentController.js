@@ -1,6 +1,6 @@
 const Comment = require('../db/models/comment');
 const User = require('../db/models/user');
-const { redisClient } = require('../db/config/redisClient');
+const { redisClient, CACHE_TTL } = require('../db/config/redisClient');
 
 // Helper para invalidar cachés relacionados con comentarios
 const invalidateCommentCaches = async (commentId = null, postId = null) => {
@@ -63,7 +63,7 @@ module.exports = {
         return res.status(204).send();
       }
 
-      await redisClient.set(cacheKey, JSON.stringify(comments), { EX: 300 });
+      await redisClient.set(cacheKey, JSON.stringify(comments), { EX: CACHE_TTL.COMMENTS });
       res.status(200).json(comments);
     } catch (err) {
       console.error(err);
@@ -89,7 +89,7 @@ module.exports = {
         return res.status(204).send();
       }
 
-      await redisClient.set(cacheKey, JSON.stringify(comments), { EX: 300 });
+      await redisClient.set(cacheKey, JSON.stringify(comments), { EX: CACHE_TTL.COMMENTS });
       res.status(200).json(comments);
     } catch (err) {
       console.error(err);
@@ -114,7 +114,7 @@ module.exports = {
         return res.status(404).json({ error: 'Comentario no encontrado' });
       }
 
-      await redisClient.set(cacheKey, JSON.stringify(comment), { EX: 300 });
+      await redisClient.set(cacheKey, JSON.stringify(comment), { EX: CACHE_TTL.COMMENTS });
       res.status(200).json(comment);
     } catch (err) {
       console.error(err);
