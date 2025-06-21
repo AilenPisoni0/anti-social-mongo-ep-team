@@ -132,9 +132,7 @@ module.exports = {
 
       await invalidateUserCaches(id);
 
-      res.status(200).json({
-        message: "Usuario eliminado exitosamente junto con todos sus recursos asociados"
-      });
+      res.status(204).send();
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'No se pudo eliminar el usuario' });

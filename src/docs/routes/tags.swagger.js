@@ -20,15 +20,11 @@
  *         updatedAt:
  *           type: string
  *           format: date-time
- *         posts:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/Post'
  * 
  * /tags:
  *   get:
  *     summary: Obtener todos los tags
- *     description: Retorna una lista de todos los tags con sus posts populados
+ *     description: Retorna una lista de todos los tags con campos básicos
  *     tags: [Tags]
  *     responses:
  *       200:
@@ -36,15 +32,11 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Tags obtenidos exitosamente"
- *                 tags:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Tag'
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Tag'
+ *       204:
+ *         description: No hay tags
  *       500:
  *         description: Error interno del servidor
  *         content:
@@ -54,7 +46,7 @@
  *               properties:
  *                 error:
  *                   type: string
- *                   example: "No se pudieron obtener los tags"
+ *                   example: "Error interno del servidor"
  *   post:
  *     summary: Crear un nuevo tag
  *     description: Crea un nuevo tag con nombre único
@@ -101,14 +93,14 @@
  *               properties:
  *                 error:
  *                   type: string
- *                   example: "El nombre del tag ya existe"
+ *                   example: "Ya existe un tag con el nombre tecnologia"
  *       500:
  *         description: Error interno del servidor
  * 
  * /tags/{id}:
  *   get:
  *     summary: Obtener un tag por ID
- *     description: Retorna un tag específico con sus posts populados
+ *     description: Retorna un tag específico con campos básicos
  *     tags: [Tags]
  *     parameters:
  *       - in: path
@@ -125,13 +117,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Tag obtenido exitosamente"
- *                 tag:
- *                   $ref: '#/components/schemas/Tag'
+ *               $ref: '#/components/schemas/Tag'
  *       404:
  *         description: Tag no encontrado
  *         content:
@@ -208,16 +194,8 @@
  *         example: "6856ea88be5012c57195297d"
  *         description: ID del tag (ObjectId de MongoDB)
  *     responses:
- *       200:
+ *       204:
  *         description: Tag eliminado exitosamente
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Tag eliminado exitosamente"
  *       404:
  *         description: Tag no encontrado
  *       500:

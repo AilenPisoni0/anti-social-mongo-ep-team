@@ -2,16 +2,15 @@ const express = require('express');
 const router = express.Router();
 const postController = require('../controllers/postController');
 const commentController = require('../controllers/commentController');
-const { genericMiddleware, postMiddleware, userMiddleware, fileValidationMiddleware, postImageMiddleware, uploadMiddleware } = require("../middlewares");
-const { createPostSchema, updatePostSchema } = require("../schemas");
+const postImageController = require('../controllers/postImageController');
+const { genericMiddleware, postMiddleware, userMiddleware } = require("../middlewares");
+const { createPostSchema, updatePostSchema, createPostImageSchema } = require("../schemas");
 const Post = require("../db/models/post");
 const User = require("../db/models/user");
 
 router.get('/', postController.getAllPosts);
 
 router.post('/',
-    fileValidationMiddleware.validateRequiredFields,
-    fileValidationMiddleware.validateImageFiles,
     genericMiddleware.schemaValidator(createPostSchema),
     userMiddleware.existUserModelById(),
     postController.createPost
@@ -22,7 +21,6 @@ router.get('/:id', postController.getPostById);
 router.put('/:id',
     genericMiddleware.validateMongoId,
     genericMiddleware.createEntityExistsValidator(Post, 'Post'),
-    fileValidationMiddleware.validateImageFiles,
     genericMiddleware.schemaValidator(updatePostSchema),
     userMiddleware.existUserModelById(),
     postController.updatePost
@@ -35,41 +33,24 @@ router.delete('/:id',
     postController.deletePost
 );
 
+// Rutas anidadas para imágenes de posts
 router.get('/:id/images',
     genericMiddleware.validateMongoId,
     genericMiddleware.createEntityExistsValidator(Post, 'Post'),
-    postController.getPostImages
+    postImageController.getPostImages
 );
 
 router.post('/:id/images',
     genericMiddleware.validateMongoId,
     genericMiddleware.createEntityExistsValidator(Post, 'Post'),
-    uploadMiddleware.upload.single('imagen'),
-    uploadMiddleware.handleUploadError,
-    postController.addImageFromPost
+    genericMiddleware.schemaValidator(createPostImageSchema),
+    postImageController.createPostImage
 );
 
 router.delete('/:id/images/:imageId',
     genericMiddleware.validateMongoId,
     genericMiddleware.createEntityExistsValidator(Post, 'Post'),
-    postImageMiddleware.existImageInPost(),
-    postController.removeImageFromPost
-);
-
-router.put('/:id/images',
-    genericMiddleware.validateMongoId,
-    genericMiddleware.createEntityExistsValidator(Post, 'Post'),
-    fileValidationMiddleware.validateImageFiles,
-    postController.updatePostImages
-);
-
-router.put('/:id/images/:imageId',
-    genericMiddleware.validateMongoId,
-    genericMiddleware.createEntityExistsValidator(Post, 'Post'),
-    postImageMiddleware.existImageInPost(),
-    uploadMiddleware.upload.single('imagen'),
-    uploadMiddleware.handleUploadError,
-    postController.updateImageFromPost
+    postImageController.deletePostImage
 );
 
 // Rutas para comentarios de posts
@@ -77,6 +58,26 @@ router.get('/:id/comments',
     genericMiddleware.validateMongoId,
     genericMiddleware.createEntityExistsValidator(Post, 'Post'),
     commentController.getPostComments
+);
+
+// Rutas para tags de posts
+router.get('/:id/tags',
+    genericMiddleware.validateMongoId,
+    genericMiddleware.createEntityExistsValidator(Post, 'Post'),
+    postController.getPostTags
+);
+
+// Rutas para tags individuales de posts
+router.post('/:id/tags/:tagId',
+    genericMiddleware.validateMongoId,
+    genericMiddleware.createEntityExistsValidator(Post, 'Post'),
+    postController.addTagToPost
+);
+
+router.delete('/:id/tags/:tagId',
+    genericMiddleware.validateMongoId,
+    genericMiddleware.createEntityExistsValidator(Post, 'Post'),
+    postController.removeTagFromPost
 );
 
 module.exports = router;

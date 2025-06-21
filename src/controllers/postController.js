@@ -5,7 +5,6 @@ const Tag = require('../db/models/tag');
 const Comment = require('../db/models/comment');
 const User = require('../db/models/user');
 const { redisClient } = require('../db/config/redisClient');
-const { uploadMiddleware } = require("../middlewares");
 
 // Helper para invalidar cachés relacionados con posts
 const invalidatePostCaches = async (postId = null) => {
@@ -59,8 +58,7 @@ const getPostsWithPopulatedData = async () => {
 module.exports = {
   createPost: async (req, res) => {
     try {
-      const { description, userId, tags } = req.body;
-      const files = req.files;
+      const { description, userId, tags, imagenes } = req.body;
 
       const newPost = new Post({
         description,
@@ -70,11 +68,11 @@ module.exports = {
 
       await newPost.save();
 
-      // Crear imágenes si se subieron archivos
-      if (files && files.length > 0) {
-        const postImages = files.map(file => ({
+      // Crear imágenes si se proporcionaron URLs
+      if (imagenes && imagenes.length > 0) {
+        const postImages = imagenes.map(url => ({
           postId: newPost._id,
-          url: `/uploads/images/${file.filename}` // Ruta relativa al servidor
+          url
         }));
 
         await PostImage.insertMany(postImages);
@@ -191,150 +189,101 @@ module.exports = {
 
       await invalidatePostCaches(req.params.id);
 
-      res.status(200).json({
-        message: "Post eliminado exitosamente junto con todos sus recursos asociados"
-      });
+      res.status(204).send();
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'No se pudo eliminar el post' });
     }
   },
 
-  getPostImages: async (req, res) => {
+  addTagToPost: async (req, res) => {
     try {
-      const { id } = req.params;
-      const images = await PostImage.find({ postId: id });
+      const { id: postId, tagId } = req.params;
 
-      if (!images || images.length === 0) {
-        return res.status(204).send();
+      // Verificar que el tag existe
+      const tag = await Tag.findById(tagId);
+      if (!tag) {
+        return res.status(404).json({ error: 'Tag no encontrado' });
       }
 
-      res.status(200).json(images);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'No se pudieron obtener las imágenes del post' });
-    }
-  },
-
-  addImageFromPost: async (req, res) => {
-    try {
-      const { id } = req.params;
-      const file = req.file;
-
-      if (!file) {
-        return res.status(400).json({ error: 'Debe subir una imagen' });
+      // Verificar que el post no tenga ya este tag
+      const post = await Post.findById(postId);
+      if (post.tags.includes(tagId)) {
+        return res.status(400).json({ error: 'El post ya tiene este tag asociado' });
       }
 
-      const newImage = new PostImage({
-        postId: id,
-        url: `/uploads/images/${file.filename}`
-      });
-      await newImage.save();
+      // Agregar el tag al post
+      post.tags.push(tagId);
+      await post.save();
 
-      await invalidatePostCaches(id);
+      // Obtener el post actualizado con formato unificado
+      const updatedPost = await getPostWithPopulatedData(postId);
 
-      res.status(201).json({
-        message: "Imagen agregada exitosamente al post",
-        image: newImage
-      });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'No se pudo agregar la imagen' });
-    }
-  },
-
-  updateImageFromPost: async (req, res) => {
-    try {
-      const { id, imageId } = req.params;
-      const file = req.file;
-
-      if (!file) {
-        return res.status(400).json({ error: 'Debe subir una imagen' });
-      }
-
-      const image = await PostImage.findById(imageId);
-      if (!image) {
-        return res.status(404).json({ error: 'Imagen no encontrada' });
-      }
-
-      // borrar el archivo anterior del disco
-      const fs = require('fs');
-      const path = require('path');
-      if (image.url) {
-        try {
-          fs.unlinkSync(path.join(__dirname, '../../', image.url));
-        } catch (e) { /* ignorar error si no existe */ }
-      }
-
-      image.url = `/uploads/images/${file.filename}`;
-      await image.save();
-
-      await invalidatePostCaches(id);
+      await invalidatePostCaches(postId);
 
       res.status(200).json({
-        message: "Imagen actualizada exitosamente",
-        image: image
-      });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'No se pudo actualizar la imagen' });
-    }
-  },
-
-  removeImageFromPost: async (req, res) => {
-    try {
-      const { id, imageId } = req.params;
-
-      // Verificar que la imagen existe antes de eliminarla
-      const image = await PostImage.findById(imageId);
-      if (!image) {
-        return res.status(404).json({ error: 'Imagen no encontrada' });
-      }
-
-      await PostImage.findByIdAndDelete(imageId);
-
-      await invalidatePostCaches(id);
-
-      res.status(200).json({
-        message: "Imagen eliminada exitosamente"
-      });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'No se pudo eliminar la imagen' });
-    }
-  },
-
-  updatePostImages: async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { imagenes } = req.body;
-
-      const post = await Post.findById(id);
-      if (!post) {
-        return res.status(404).json({ error: 'Post no encontrado' });
-      }
-
-      await PostImage.deleteMany({ postId: id });
-
-      if (imagenes && imagenes.length > 0) {
-        const postImages = imagenes.map(url => ({
-          postId: id,
-          url
-        }));
-        await PostImage.insertMany(postImages);
-      }
-
-      const updatedPost = await getPostWithPopulatedData(id);
-
-      await invalidatePostCaches(id);
-
-      res.status(200).json({
-        message: "Imágenes del post actualizadas exitosamente",
+        message: "Tag agregado al post exitosamente",
         post: updatedPost
       });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ error: 'No se pudieron actualizar las imágenes del post' });
+      res.status(500).json({ error: 'No se pudo agregar el tag al post' });
+    }
+  },
+
+  removeTagFromPost: async (req, res) => {
+    try {
+      const { id: postId, tagId } = req.params;
+
+      // Verificar que el tag existe
+      const tag = await Tag.findById(tagId);
+      if (!tag) {
+        return res.status(404).json({ error: 'Tag no encontrado' });
+      }
+
+      // Verificar que el post tenga este tag
+      const post = await Post.findById(postId);
+      if (!post.tags.includes(tagId)) {
+        return res.status(400).json({ error: 'El post no tiene este tag asociado' });
+      }
+
+      // Remover el tag del post
+      post.tags = post.tags.filter(id => id.toString() !== tagId);
+      await post.save();
+
+      // Obtener el post actualizado con formato unificado
+      const updatedPost = await getPostWithPopulatedData(postId);
+
+      await invalidatePostCaches(postId);
+
+      res.status(200).json({
+        message: "Tag removido del post exitosamente",
+        post: updatedPost
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'No se pudo remover el tag del post' });
+    }
+  },
+
+  getPostTags: async (req, res) => {
+    try {
+      const { id: postId } = req.params;
+
+      const post = await Post.findById(postId).populate('tags', 'name').lean();
+
+      if (!post) {
+        return res.status(404).json({ error: 'Post no encontrado' });
+      }
+
+      if (!post.tags || post.tags.length === 0) {
+        return res.status(204).send();
+      }
+
+      res.status(200).json(post.tags);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'No se pudieron obtener los tags del post' });
     }
   }
 };

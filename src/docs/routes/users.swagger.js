@@ -33,7 +33,7 @@
  * /users:
  *   get:
  *     summary: Obtener todos los usuarios
- *     description: Retorna una lista de todos los usuarios con sus posts y comentarios populados
+ *     description: Retorna una lista de todos los usuarios con campos básicos
  *     tags: [Users]
  *     responses:
  *       200:
@@ -41,15 +41,11 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Usuarios obtenidos exitosamente"
- *                 users:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/User'
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ *       204:
+ *         description: No hay usuarios
  *       500:
  *         description: Error interno del servidor
  *         content:
@@ -107,14 +103,14 @@
  *               properties:
  *                 error:
  *                   type: string
- *                   example: "El email ya está registrado"
+ *                   example: "Ya existe un usuario con ese nickName"
  *       500:
  *         description: Error interno del servidor
  * 
  * /users/{id}:
  *   get:
  *     summary: Obtener un usuario por ID
- *     description: Retorna un usuario específico con sus posts y comentarios populados
+ *     description: Retorna un usuario específico con campos básicos
  *     tags: [Users]
  *     parameters:
  *       - in: path
@@ -131,13 +127,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Usuario obtenido exitosamente"
- *                 user:
- *                   $ref: '#/components/schemas/User'
+ *               $ref: '#/components/schemas/User'
  *       404:
  *         description: Usuario no encontrado
  *         content:
@@ -214,16 +204,8 @@
  *         example: "6856ea88be5012c571952977"
  *         description: ID del usuario (ObjectId de MongoDB)
  *     responses:
- *       200:
+ *       204:
  *         description: Usuario eliminado exitosamente
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Usuario eliminado exitosamente junto con todos sus recursos asociados"
  *       404:
  *         description: Usuario no encontrado
  *       500:

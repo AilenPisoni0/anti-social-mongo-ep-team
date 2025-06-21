@@ -47,7 +47,7 @@ module.exports = {
       const tags = await Tag.find({}, 'id name').lean();
 
       if (tags.length === 0) {
-        return res.status(204).json({ message: 'No hay tags disponibles' });
+        return res.status(204).send();
       }
 
       await redisClient.set(cacheKey, JSON.stringify(tags), { EX: 300 });
@@ -136,10 +136,7 @@ module.exports = {
 
       await invalidateTagCaches(tagId);
 
-      res.status(200).json({
-        message: "Tag eliminado exitosamente",
-        deletedTag: tag
-      });
+      res.status(204).send();
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'No se pudo eliminar el tag' });

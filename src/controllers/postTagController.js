@@ -141,7 +141,7 @@ module.exports = {
                 .lean();
 
             if (posts.length === 0) {
-                return res.status(204).json({ message: 'No hay posts con este tag' });
+                return res.status(204).send();
             }
 
             await redisClient.set(cacheKey, JSON.stringify(posts), { EX: 300 });

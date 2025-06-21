@@ -29,15 +29,9 @@ module.exports = {
 
       await invalidateCommentCaches(null, postId);
 
-      const commentWithUser = await Comment.findById(newComment._id)
-        .populate({
-          path: 'userId',
-          select: 'nickName'
-        });
-
       res.status(201).json({
         message: "Comentario creado exitosamente",
-        comment: commentWithUser
+        comment: newComment
       });
     } catch (err) {
       console.error(err);
@@ -66,7 +60,6 @@ module.exports = {
         postId,
         createdAt: { $gte: cutoffDate }
       })
-        .populate('userId', 'nickName')
         .sort({ createdAt: -1 });
 
       if (comments.length === 0) {
@@ -93,7 +86,6 @@ module.exports = {
       }
 
       const comments = await Comment.find()
-        .populate('userId', 'nickName')
         .sort({ createdAt: -1 });
 
       if (comments.length === 0) {
@@ -119,8 +111,7 @@ module.exports = {
         return res.status(200).json(JSON.parse(cached));
       }
 
-      const comment = await Comment.findById(id)
-        .populate('userId', 'nickName');
+      const comment = await Comment.findById(id);
 
       if (!comment) {
         return res.status(404).json({ error: 'Comentario no encontrado' });
@@ -153,7 +144,7 @@ module.exports = {
         id,
         { $set: updates },
         { new: true }
-      ).populate('userId', 'nickName');
+      );
 
       if (!updatedComment) {
         return res.status(404).json({ error: 'Comentario no encontrado' });
@@ -186,9 +177,7 @@ module.exports = {
 
       await invalidateCommentCaches(id, postId);
 
-      res.status(200).json({
-        message: "Comentario eliminado exitosamente"
-      });
+      res.status(204).send();
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'No se pudo eliminar el comentario' });

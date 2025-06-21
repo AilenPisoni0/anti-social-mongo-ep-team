@@ -3,7 +3,7 @@ const express = require('express')
 const app = express()
 const { redisClient, connectRedis } = require('./db/config/redisClient');
 const conectarDB = require('./db/config/config')
-const { userRoute, commentRoute, tagRoute, postRoute, postImageRoute, postTagRoute } = require("./routes");
+const { userRoute, commentRoute, tagRoute, postRoute } = require("./routes");
 const { specs, swaggerUi } = require('./docs/swagger');
 
 require('dotenv').config()
@@ -20,9 +20,6 @@ app.use("/users", userRoute);
 app.use("/posts", postRoute);
 app.use('/tags', tagRoute);
 app.use("/comments", commentRoute);
-app.use("/post-images", postImageRoute);
-app.use("/post-tags", postTagRoute);
-app.use('/uploads/images', express.static('uploads/images'));
 
 // Conexión a bases de datos
 conectarDB()

@@ -1,148 +1,191 @@
+const mongoose = require('mongoose');
 const User = require('../models/user');
 const Post = require('../models/post');
 const Tag = require('../models/tag');
 const Comment = require('../models/comment');
 const PostImage = require('../models/postImage');
+const config = require('../config/config.json');
 
-const seedData = async () => {
+// URLs de imágenes de ejemplo
+const sampleImageUrls = [
+    'https://picsum.photos/800/600?random=1',
+    'https://picsum.photos/800/600?random=2',
+    'https://picsum.photos/800/600?random=3',
+    'https://picsum.photos/800/600?random=4',
+    'https://picsum.photos/800/600?random=5'
+];
+
+async function seed() {
     try {
-        console.log('Iniciando seeding de datos...');
+        // Conectar a MongoDB
+        await mongoose.connect(config.mongoURI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
+        console.log('Conectado a MongoDB');
 
+        // Limpiar colecciones existentes
         await User.deleteMany({});
         await Post.deleteMany({});
         await Tag.deleteMany({});
         await Comment.deleteMany({});
         await PostImage.deleteMany({});
+        console.log('Colecciones limpiadas');
 
-        console.log('Datos anteriores eliminados');
-
-        const users = await User.create([
+        // Crear usuarios
+        const users = await User.insertMany([
             {
-                nickName: 'john_doe',
-                email: 'john@example.com'
+                nickName: 'usuario1',
+                email: 'usuario1@example.com',
+                password: 'password123',
+                firstName: 'Juan',
+                lastName: 'Pérez',
+                birthDate: new Date('1990-01-15'),
+                gender: 'M',
+                country: 'Argentina',
+                city: 'Buenos Aires'
             },
             {
-                nickName: 'jane_smith',
-                email: 'jane@example.com'
+                nickName: 'usuario2',
+                email: 'usuario2@example.com',
+                password: 'password123',
+                firstName: 'María',
+                lastName: 'González',
+                birthDate: new Date('1992-05-20'),
+                gender: 'F',
+                country: 'Argentina',
+                city: 'Córdoba'
             },
             {
-                nickName: 'bob_wilson',
-                email: 'bob@example.com'
+                nickName: 'usuario3',
+                email: 'usuario3@example.com',
+                password: 'password123',
+                firstName: 'Carlos',
+                lastName: 'López',
+                birthDate: new Date('1988-12-10'),
+                gender: 'M',
+                country: 'Argentina',
+                city: 'Rosario'
             }
         ]);
+        console.log('Usuarios creados');
 
-        console.log('Usuarios creados:', users.length);
-
-        const tags = await Tag.create([
-            {
-                name: 'tecnologia',
-                color: '#FF5733'
-            },
-            {
-                name: 'lifestyle',
-                color: '#33FF57'
-            },
-            {
-                name: 'viajes',
-                color: '#3357FF'
-            },
-            {
-                name: 'programacion',
-                color: '#F333FF'
-            }
+        // Crear tags
+        const tags = await Tag.insertMany([
+            { name: 'tecnología' },
+            { name: 'deportes' },
+            { name: 'música' },
+            { name: 'cocina' },
+            { name: 'viajes' },
+            { name: 'programación' },
+            { name: 'arte' },
+            { name: 'ciencia' }
         ]);
+        console.log('Tags creados');
 
-        console.log('Tags creados:', tags.length);
-
-        const posts = await Post.create([
+        // Crear posts
+        const posts = await Post.insertMany([
             {
-                description: 'Este es mi primer post en la red social!',
+                description: 'Mi primer post en la red antisocial!',
                 userId: users[0]._id,
-                tags: [tags[0]._id, tags[3]._id]
+                tags: [tags[0]._id, tags[5]._id] // tecnología, programación
             },
             {
-                description: 'Compartiendo mis pensamientos en esta nueva plataforma',
+                description: 'Hoy fue un día increíble practicando deportes',
                 userId: users[1]._id,
-                tags: [tags[1]._id]
+                tags: [tags[1]._id] // deportes
             },
             {
-                description: 'Hola a todos! Me encanta esta red social',
+                description: 'Nueva receta que probé hoy, quedó deliciosa!',
                 userId: users[2]._id,
-                tags: [tags[2]._id]
+                tags: [tags[3]._id, tags[6]._id] // cocina, arte
+            },
+            {
+                description: 'Viajando por el mundo y descubriendo nuevos lugares',
+                userId: users[0]._id,
+                tags: [tags[4]._id] // viajes
+            },
+            {
+                description: 'Escuchando música mientras programo',
+                userId: users[1]._id,
+                tags: [tags[2]._id, tags[5]._id] // música, programación
             }
         ]);
+        console.log('Posts creados');
 
-        console.log('Posts creados:', posts.length);
+        // Crear imágenes para los posts
+        const postImages = [];
+        posts.forEach((post, index) => {
+            // Cada post tendrá 1-3 imágenes
+            const numImages = Math.floor(Math.random() * 3) + 1;
+            for (let i = 0; i < numImages; i++) {
+                postImages.push({
+                    postId: post._id,
+                    url: sampleImageUrls[(index + i) % sampleImageUrls.length]
+                });
+            }
+        });
+        await PostImage.insertMany(postImages);
+        console.log('Imágenes de posts creadas');
 
-        const comments = await Comment.create([
+        // Crear comentarios
+        const comments = await Comment.insertMany([
             {
-                content: 'Excelente post! Me encanta la tecnologia',
+                content: '¡Excelente post!',
                 userId: users[1]._id,
                 postId: posts[0]._id
             },
             {
-                content: 'Totalmente de acuerdo contigo',
+                content: 'Me encanta la tecnología',
                 userId: users[2]._id,
                 postId: posts[0]._id
             },
             {
-                content: 'Bienvenido a la plataforma!',
+                content: '¡Qué bueno que te diviertas con deportes!',
+                userId: users[0]._id,
+                postId: posts[1]._id
+            },
+            {
+                content: '¿Podrías compartir la receta?',
+                userId: users[1]._id,
+                postId: posts[2]._id
+            },
+            {
+                content: '¡Se ve delicioso!',
                 userId: users[0]._id,
                 postId: posts[2]._id
-            }
-        ]);
-
-        console.log('Comentarios creados:', comments.length);
-
-        const postImages = await PostImage.create([
-            {
-                postId: posts[0]._id,
-                url: '/uploads/images/prueba.jpg'
             },
             {
-                postId: posts[1]._id,
-                url: '/uploads/images/prueba-2.jpg'
+                content: '¿A dónde viajaste?',
+                userId: users[2]._id,
+                postId: posts[3]._id
+            },
+            {
+                content: 'La música es lo mejor para programar',
+                userId: users[0]._id,
+                postId: posts[4]._id
             }
         ]);
+        console.log('Comentarios creados');
 
-        console.log('Imagenes creadas:', postImages.length);
-
-        console.log('Seeding completado exitosamente!');
-        console.log('Resumen de datos creados:');
-        console.log(`- Usuarios: ${users.length}`);
-        console.log(`- Tags: ${tags.length}`);
-        console.log(`- Posts: ${posts.length}`);
-        console.log(`- Comentarios: ${comments.length}`);
-        console.log(`- Imagenes: ${postImages.length}`);
-
-        console.log('IDs importantes para pruebas:');
-        console.log(`- Usuario 1 (john_doe): ${users[0]._id}`);
-        console.log(`- Usuario 2 (jane_smith): ${users[1]._id}`);
-        console.log(`- Post 1: ${posts[0]._id}`);
-        console.log(`- Tag tecnologia: ${tags[0]._id}`);
+        console.log('¡Seed completado exitosamente!');
+        console.log(`- ${users.length} usuarios creados`);
+        console.log(`- ${tags.length} tags creados`);
+        console.log(`- ${posts.length} posts creados`);
+        console.log(`- ${postImages.length} imágenes creadas`);
+        console.log(`- ${comments.length} comentarios creados`);
 
     } catch (error) {
-        console.error('Error durante el seeding:', error);
+        console.error('Error durante el seed:', error);
+    } finally {
+        await mongoose.disconnect();
+        console.log('Desconectado de MongoDB');
     }
-};
-
-if (require.main === module) {
-    const mongoose = require('mongoose');
-    require('dotenv').config();
-
-    mongoose.connect(process.env.MONGO_URI)
-        .then(() => {
-            console.log('Conectado a MongoDB');
-            return seedData();
-        })
-        .then(() => {
-            console.log('Proceso completado');
-            process.exit(0);
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-            process.exit(1);
-        });
 }
 
-module.exports = seedData; 
+// Ejecutar el seed si se llama directamente
+if (require.main === module) {
+    seed();
+}
+
+module.exports = seed; 

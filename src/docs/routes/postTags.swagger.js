@@ -20,15 +20,11 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Tags del post obtenidos exitosamente"
- *                 tags:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Tag'
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Tag'
+ *       204:
+ *         description: No hay tags asociados a este post
  *       404:
  *         description: Post no encontrado
  *       500:
@@ -66,9 +62,11 @@
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Tag asociado exitosamente al post"
- *                 post:
- *                   $ref: '#/components/schemas/Post'
+ *                   example: "Tag agregado exitosamente al post"
+ *                 tags:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Tag'
  *       400:
  *         description: El tag ya está asociado al post
  *       404:
@@ -106,9 +104,7 @@
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Tag removido exitosamente del post"
- *                 post:
- *                   $ref: '#/components/schemas/Post'
+ *                   example: "Tag eliminado exitosamente del post"
  *       404:
  *         description: Post o tag no encontrado
  *       500:
@@ -134,15 +130,11 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Posts del tag obtenidos exitosamente"
- *                 posts:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Post'
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Post'
+ *       204:
+ *         description: No hay posts con este tag
  *       404:
  *         description: Tag no encontrado
  *       500:

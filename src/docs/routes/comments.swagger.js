@@ -23,15 +23,11 @@
  *         updatedAt:
  *           type: string
  *           format: date-time
- *         user:
- *           $ref: '#/components/schemas/User'
- *         post:
- *           $ref: '#/components/schemas/Post'
  * 
  * /comments:
  *   get:
  *     summary: Obtener todos los comentarios
- *     description: Retorna una lista de todos los comentarios con usuarios y posts populados
+ *     description: Retorna una lista de todos los comentarios con campos básicos
  *     tags: [Comments]
  *     responses:
  *       200:
@@ -39,15 +35,11 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Comentarios obtenidos exitosamente"
- *                 comments:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Comment'
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Comment'
+ *       204:
+ *         description: No hay comentarios
  *       500:
  *         description: Error interno del servidor
  *         content:
@@ -112,7 +104,7 @@
  * /comments/{id}:
  *   get:
  *     summary: Obtener un comentario por ID
- *     description: Retorna un comentario específico con usuario y post populados
+ *     description: Retorna un comentario específico con campos básicos
  *     tags: [Comments]
  *     parameters:
  *       - in: path
@@ -129,13 +121,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Comentario obtenido exitosamente"
- *                 comment:
- *                   $ref: '#/components/schemas/Comment'
+ *               $ref: '#/components/schemas/Comment'
  *       404:
  *         description: Comentario no encontrado
  *         content:
@@ -209,16 +195,8 @@
  *         example: "6856ea88be5012c571952987"
  *         description: ID del comentario (ObjectId de MongoDB)
  *     responses:
- *       200:
+ *       204:
  *         description: Comentario eliminado exitosamente
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Comentario eliminado exitosamente"
  *       404:
  *         description: Comentario no encontrado
  *       500:
