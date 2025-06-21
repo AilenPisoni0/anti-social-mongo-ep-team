@@ -4,27 +4,29 @@ const Post = require('../models/post');
 const Tag = require('../models/tag');
 const Comment = require('../models/comment');
 const PostImage = require('../models/postImage');
-const config = require('../config/config.json');
+require('dotenv').config();
 
 // URLs de imágenes de ejemplo
 const sampleImageUrls = [
-    'https://picsum.photos/800/600?random=1',
-    'https://picsum.photos/800/600?random=2',
-    'https://picsum.photos/800/600?random=3',
-    'https://picsum.photos/800/600?random=4',
-    'https://picsum.photos/800/600?random=5'
+    'https://ejemplo.com/imagen1.jpg',
+    'https://ejemplo.com/imagen2.jpg',
+    'https://ejemplo.com/imagen3.jpg',
+    'https://ejemplo.com/imagen4.jpg',
+    'https://ejemplo.com/imagen5.jpg',
 ];
 
 async function seed() {
     try {
-        // Conectar a MongoDB
-        await mongoose.connect(config.mongoURI, {
+        if (!process.env.MONGO_URI) {
+            throw new Error('MONGO_URI no está definida en las variables de entorno');
+        }
+
+        await mongoose.connect(process.env.MONGO_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });
         console.log('Conectado a MongoDB');
 
-        // Limpiar colecciones existentes
         await User.deleteMany({});
         await Post.deleteMany({});
         await Tag.deleteMany({});
@@ -32,7 +34,6 @@ async function seed() {
         await PostImage.deleteMany({});
         console.log('Colecciones limpiadas');
 
-        // Crear usuarios
         const users = await User.insertMany([
             {
                 nickName: 'usuario1',
@@ -68,9 +69,8 @@ async function seed() {
                 city: 'Rosario'
             }
         ]);
-        console.log('Usuarios creados');
+        console.log(`${users.length} usuarios creados`);
 
-        // Crear tags
         const tags = await Tag.insertMany([
             { name: 'tecnología' },
             { name: 'deportes' },
@@ -81,22 +81,22 @@ async function seed() {
             { name: 'arte' },
             { name: 'ciencia' }
         ]);
-        console.log('Tags creados');
+        console.log(`${tags.length} tags creados`);
 
-        // Crear posts
+        console.log('Creando posts...');
         const posts = await Post.insertMany([
             {
-                description: 'Mi primer post en la red antisocial!',
+                description: 'Mi primer post en la red antisocial! :)',
                 userId: users[0]._id,
                 tags: [tags[0]._id, tags[5]._id] // tecnología, programación
             },
             {
-                description: 'Hoy fue un día increíble practicando deportes',
+                description: 'Aguante Messi!',
                 userId: users[1]._id,
                 tags: [tags[1]._id] // deportes
             },
             {
-                description: 'Nueva receta que probé hoy, quedó deliciosa!',
+                description: 'Nueva receta que probé hoy, quedó riquisima!',
                 userId: users[2]._id,
                 tags: [tags[3]._id, tags[6]._id] // cocina, arte
             },
@@ -111,12 +111,11 @@ async function seed() {
                 tags: [tags[2]._id, tags[5]._id] // música, programación
             }
         ]);
-        console.log('Posts creados');
+        console.log(`${posts.length} posts creados`);
 
-        // Crear imágenes para los posts
         const postImages = [];
         posts.forEach((post, index) => {
-            // Cada post tendrá 1-3 imágenes
+            // Cada post va a tener 1-3 imágenes random elegidas
             const numImages = Math.floor(Math.random() * 3) + 1;
             for (let i = 0; i < numImages; i++) {
                 postImages.push({
@@ -126,9 +125,8 @@ async function seed() {
             }
         });
         await PostImage.insertMany(postImages);
-        console.log('Imágenes de posts creadas');
+        console.log(`${postImages.length} imágenes de posts creadas`);
 
-        // Crear comentarios
         const comments = await Comment.insertMany([
             {
                 content: '¡Excelente post!',
@@ -141,7 +139,7 @@ async function seed() {
                 postId: posts[0]._id
             },
             {
-                content: '¡Qué bueno que te diviertas con deportes!',
+                content: 'God!',
                 userId: users[0]._id,
                 postId: posts[1]._id
             },
@@ -151,12 +149,12 @@ async function seed() {
                 postId: posts[2]._id
             },
             {
-                content: '¡Se ve delicioso!',
+                content: '¡Se ve re bueno!',
                 userId: users[0]._id,
                 postId: posts[2]._id
             },
             {
-                content: '¿A dónde viajaste?',
+                content: '¿A dónde fuiste?',
                 userId: users[2]._id,
                 postId: posts[3]._id
             },
@@ -166,24 +164,19 @@ async function seed() {
                 postId: posts[4]._id
             }
         ]);
-        console.log('Comentarios creados');
-
-        console.log('¡Seed completado exitosamente!');
-        console.log(`- ${users.length} usuarios creados`);
-        console.log(`- ${tags.length} tags creados`);
-        console.log(`- ${posts.length} posts creados`);
-        console.log(`- ${postImages.length} imágenes creadas`);
-        console.log(`- ${comments.length} comentarios creados`);
+        console.log(`${comments.length} comentarios creados`);
 
     } catch (error) {
-        console.error('Error durante el seed:', error);
+        console.error('Error durante el seed:', error.message);
+        console.error('Stack trace:', error.stack);
     } finally {
-        await mongoose.disconnect();
-        console.log('Desconectado de MongoDB');
+        if (mongoose.connection.readyState === 1) {
+            await mongoose.disconnect();
+            console.log('Desconectado de MongoDB');
+        }
     }
 }
 
-// Ejecutar el seed si se llama directamente
 if (require.main === module) {
     seed();
 }
