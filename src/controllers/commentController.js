@@ -27,7 +27,10 @@ module.exports = {
           select: 'nickName'
         });
 
-      res.status(201).json(commentWithUser);
+      res.status(201).json({
+        message: "Comentario creado exitosamente",
+        comment: commentWithUser
+      });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'No se pudo crear el comentario' });
@@ -43,7 +46,11 @@ module.exports = {
       const cached = await redisClient.get(cacheKey);
       if (cached) {
         console.log('Respuesta desde Redis - comentarios por post');
-        return res.status(200).json(JSON.parse(cached));
+        const comments = JSON.parse(cached);
+        if (comments.length === 0) {
+          return res.status(204).send();
+        }
+        return res.status(200).json(comments);
       }
 
       const maxAgeMonths = parseInt(process.env.MAX_COMMENT_AGE_MONTHS) || 6;
@@ -54,11 +61,11 @@ module.exports = {
         postId,
         createdAt: { $gte: cutoffDate }
       })
-      .populate('userId', 'nickName')
-      .sort({ createdAt: -1 });
+        .populate('userId', 'nickName')
+        .sort({ createdAt: -1 });
 
       if (comments.length === 0) {
-        return res.status(204).json({ message: 'No hay comentarios para mostrar' });
+        return res.status(204).send();
       }
 
       await redisClient.set(cacheKey, JSON.stringify(comments), { EX: 300 });
@@ -66,7 +73,7 @@ module.exports = {
       res.status(200).json(comments);
     } catch (err) {
       console.error(err);
-      res.status(500).json({ error: 'No se pudieron obtener los comentarios' });
+      res.status(500).json({ error: 'Error interno del servidor' });
     }
   },
 
@@ -77,7 +84,11 @@ module.exports = {
       const cached = await redisClient.get(cacheKey);
       if (cached) {
         console.log('Respuesta desde Redis - todos los comentarios');
-        return res.status(200).json(JSON.parse(cached));
+        const comments = JSON.parse(cached);
+        if (comments.length === 0) {
+          return res.status(204).send();
+        }
+        return res.status(200).json(comments);
       }
 
       const comments = await Comment.find()
@@ -85,7 +96,7 @@ module.exports = {
         .sort({ createdAt: -1 });
 
       if (comments.length === 0) {
-        return res.status(204).json({ message: 'No hay comentarios para mostrar' });
+        return res.status(204).send();
       }
 
       await redisClient.set(cacheKey, JSON.stringify(comments), { EX: 300 });
@@ -93,7 +104,7 @@ module.exports = {
       res.status(200).json(comments);
     } catch (err) {
       console.error(err);
-      res.status(500).json({ error: 'No se pudieron obtener los comentarios' });
+      res.status(500).json({ error: 'Error interno del servidor' });
     }
   },
 
@@ -113,7 +124,7 @@ module.exports = {
         .populate('userId', 'nickName');
 
       if (!comment) {
-        return res.status(404).json({ message: 'Comentario no encontrado' });
+        return res.status(404).json({ error: 'Comentario no encontrado' });
       }
 
       await redisClient.set(cacheKey, JSON.stringify(comment), { EX: 300 });
@@ -125,20 +136,24 @@ module.exports = {
     }
   },
 
-  // Actualizar un comentario (contenido y/o fecha)
+  // Actualizar un comentario
   updateComment: async (req, res) => {
     try {
       const { id } = req.params;
-      const { content, createdAt, postId } = req.body;
+      const { content, postId, userId } = req.body;
 
       const updates = {};
       if (content) {
         updates.content = content;
         updates.isEdited = true;
       }
-      if (createdAt) {
-        updates.createdAt = new Date(createdAt);
+      if (postId) {
+        updates.postId = postId;
       }
+      if (userId) {
+        updates.userId = userId;
+      }
+      updates.updatedAt = new Date();
 
       const updatedComment = await Comment.findByIdAndUpdate(
         id,
@@ -157,7 +172,10 @@ module.exports = {
         await redisClient.del(`comments:post:${postId}`);
       }
 
-      res.status(200).json(updatedComment);
+      res.status(201).json({
+        message: "Comentario actualizado exitosamente",
+        comment: updatedComment
+      });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'No se pudo actualizar el comentario' });
