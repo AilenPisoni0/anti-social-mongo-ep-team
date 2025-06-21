@@ -1,3 +1,7 @@
+/**
+ * Middleware para validar campos permitidos en actualización de comentarios
+ * @returns {Function} - Middleware function
+ */
 const validateUpdateFields = () => {
    return (req, res, next) => {
       const allowedFields = ['content', 'createdAt'];  // ahora permitimos actualizar también la fecha
@@ -7,7 +11,7 @@ const validateUpdateFields = () => {
 
       if (hasInvalidFields) {
          return res.status(400).json({
-            message: 'Solo se puede actualizar el contenido o la fecha del comentario'
+            error: 'Solo se puede actualizar el contenido o la fecha del comentario'
          });
       }
       next();
@@ -15,8 +19,5 @@ const validateUpdateFields = () => {
 }
 
 module.exports = {
-  validateUpdateFields,
+   validateUpdateFields,
 };
-
-
-module.exports = { validateUpdateFields }

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const tagController = require('../controllers/tagController');
 const { genericMiddleware, tagMiddleware } = require("../middlewares");
-const { TagSchema } = require("../schemas/");
+const { TagSchema, UpdateTagSchema } = require("../schemas/");
 const { Tag } = require("../db/models");
 
 router.get('/', tagController.getAllTags);
@@ -13,22 +13,22 @@ router.post('/',
 );
 
 router.get('/:id',
-    genericMiddleware.validateId,
-    genericMiddleware.existModelById(Tag),
+    genericMiddleware.validateMongoId,
+    genericMiddleware.createEntityExistsValidator(Tag, 'Tag'),
     tagController.getTagById
 );
 
 router.put('/:id',
-    genericMiddleware.validateId,
-    genericMiddleware.existModelById(Tag),
+    genericMiddleware.validateMongoId,
+    genericMiddleware.createEntityExistsValidator(Tag, 'Tag'),
     tagMiddleware.existTagByName(),
-    genericMiddleware.schemaValidator(TagSchema),
+    genericMiddleware.schemaValidator(UpdateTagSchema),
     tagController.updateTag
 );
 
 router.delete('/:id',
-    genericMiddleware.validateId,
-    genericMiddleware.existModelById(Tag),
+    genericMiddleware.validateMongoId,
+    genericMiddleware.createEntityExistsValidator(Tag, 'Tag'),
     tagController.deleteTag
 );
 

@@ -1,7 +1,15 @@
-
 const Tag = require('../db/models/tag');
-const Post = require('../db/models/post');
-const { redisClient } = require('../db/config/redisClient');
+const { redisClient, CACHE_TTL } = require('../db/config/redisClient');
+
+// Helper para invalidar cachés relacionados con tags
+const invalidateTagCaches = async (tagId = null) => {
+  if (tagId) {
+    await redisClient.del(`tag:${tagId}`);
+    await redisClient.del(`tag:${tagId}:posts`);
+  }
+  await redisClient.del('tags:todos');
+  await redisClient.del('posts:todos');
+};
 
 module.exports = {
   // Crear un nuevo tag
@@ -10,11 +18,11 @@ module.exports = {
       const { name } = req.body;
       const newTag = await Tag.create({ name: name.toLowerCase() });
 
-      await redisClient.del('tags:todos');
+      await invalidateTagCaches();
 
       res.status(201).json(newTag);
     } catch (err) {
-      if (err.code === 11000 && err.keyPattern && err.keyPattern.name) {
+      if (err.code === 11000 && err.keyPattern?.name) {
         return res.status(400).json({ error: `Ya existe un tag con el nombre ${name}` });
       }
       console.error(err);
@@ -29,25 +37,25 @@ module.exports = {
       const cached = await redisClient.get(cacheKey);
       if (cached) {
         console.log('Respuesta desde Redis');
-        return res.status(200).json(JSON.parse(cached));
+        const tags = JSON.parse(cached);
+        return tags.length === 0 ? res.status(204).send() : res.status(200).json(tags);
       }
 
       const tags = await Tag.find({}, 'id name').lean();
 
       if (tags.length === 0) {
-        return res.status(204).json({ message: 'No hay tags disponibles' });
+        return res.status(204).send();
       }
 
-      await redisClient.set(cacheKey, JSON.stringify(tags), { EX: 300 });
-
+      await redisClient.set(cacheKey, JSON.stringify(tags), { EX: CACHE_TTL.TAGS });
       res.status(200).json(tags);
     } catch (err) {
       console.error(err);
-      res.status(500).json({ error: 'No se pudieron obtener los tags' });
+      res.status(500).json({ error: 'Error interno del servidor' });
     }
   },
 
-  // Obtener un tag específico con sus posts
+  // Obtener un tag específico
   getTagById: async (req, res) => {
     const { id } = req.params;
     const cacheKey = `tag:${id}`;
@@ -58,22 +66,13 @@ module.exports = {
         return res.status(200).json(JSON.parse(cached));
       }
 
-      const tag = await Tag.findById(id)
-        .populate({
-          path: 'posts',
-          populate: {
-            path: 'userId',
-            select: 'nickName'
-          }
-        })
-        .lean();
+      const tag = await Tag.findById(id).lean();
 
       if (!tag) {
         return res.status(404).json({ error: 'Tag no encontrado' });
       }
 
-      await redisClient.set(cacheKey, JSON.stringify(tag), { EX: 300 });
-
+      await redisClient.set(cacheKey, JSON.stringify(tag), { EX: CACHE_TTL.TAGS });
       res.status(200).json(tag);
     } catch (err) {
       console.error(err);
@@ -89,7 +88,7 @@ module.exports = {
 
       const updatedTag = await Tag.findByIdAndUpdate(
         tagId,
-        { $set: { name: name ? name.toLowerCase() : undefined, isEdited: true } },
+        { $set: { name: name ? name.toLowerCase() : undefined } },
         { new: true, runValidators: true }
       );
 
@@ -97,12 +96,11 @@ module.exports = {
         return res.status(404).json({ error: 'Tag no encontrado' });
       }
 
-      await redisClient.del(`tag:${tagId}`);
-      await redisClient.del('tags:todos');
+      await invalidateTagCaches(tagId);
 
       res.status(200).json(updatedTag);
     } catch (err) {
-      if (err.code === 11000 && err.keyPattern && err.keyPattern.name) {
+      if (err.code === 11000 && err.keyPattern?.name) {
         return res.status(400).json({ error: 'El nombre del tag ya existe' });
       }
       console.error(err);
@@ -110,18 +108,25 @@ module.exports = {
     }
   },
 
-  // Eliminar un tag
+  // Eliminar un tag completamente
   deleteTag: async (req, res) => {
     try {
       const tagId = req.params.id;
-      const tag = await Tag.findByIdAndDelete(tagId);
+      const tag = await Tag.findById(tagId);
 
       if (!tag) {
         return res.status(404).json({ error: 'Tag no encontrado' });
       }
 
-      await redisClient.del(`tag:${tagId}`);
-      await redisClient.del('tags:todos');
+      const Post = require('../db/models/post');
+      await Post.updateMany(
+        { tags: tagId },
+        { $pull: { tags: tagId } }
+      );
+
+      await Tag.findByIdAndDelete(tagId);
+
+      await invalidateTagCaches(tagId);
 
       res.status(204).send();
     } catch (err) {

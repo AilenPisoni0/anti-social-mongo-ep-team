@@ -11,17 +11,9 @@ const UserSchema = new mongoose.Schema({
     required: true,
     unique: true,
     match: /.+\@.+\..+/
-  },
-  isEdited: {
-    type: Boolean,
-    default: false
-  },
-  isDeleted: {
-    type: Boolean,
-    default: false
   }
 }, {
-  timestamps: true, //esto crea el CreateAt y EditedAt automáticamente
+  timestamps: true,
 });
 
 UserSchema.virtual('posts', {
@@ -38,7 +30,7 @@ UserSchema.virtual('comments', {
 
 
 UserSchema.set('toJSON', {
-  virtuals: true,
+  virtuals: false,
   transform: (_, ret) => {
     ret.id = ret._id;
     delete ret._id;
@@ -46,7 +38,7 @@ UserSchema.set('toJSON', {
   }
 });
 UserSchema.set('toObject', {
-  virtuals: true,
+  virtuals: false,
   transform: (_, ret) => {
     ret.id = ret._id;
     delete ret._id;

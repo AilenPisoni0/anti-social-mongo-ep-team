@@ -1,6 +1,11 @@
 // src/middlewares/postImageMiddlewares.js
 const PostImage = require('../db/models/postImage');
+const { handleMongoError } = require('../utils/validation');
 
+/**
+ * Middleware para verificar que una imagen existe en un post específico
+ * @returns {Function} - Middleware function
+ */
 const existImageInPost = () => {
   return async (req, res, next) => {
     const { id: postId, imageId } = req.params;
@@ -18,13 +23,12 @@ const existImageInPost = () => {
 
       next();
     } catch (err) {
-      console.error(err);
-      if (err.name === 'CastError') {
-        return res.status(400).json({ message: `ID de imagen ${imageId} no es válido` });
-      }
-      res.status(500).json({ error: 'Error al verificar la imagen en el post' });
+      const errorResponse = handleMongoError(err, 'imagen');
+      return res.status(errorResponse.statusCode).json(errorResponse);
     }
-  }
+  };
 };
 
-module.exports = { existImageInPost };
+module.exports = {
+  existImageInPost
+};

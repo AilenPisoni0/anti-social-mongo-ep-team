@@ -4,10 +4,6 @@ const CommentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  isEdited: {
-    type: Boolean,
-    default: false
-  },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -19,12 +15,27 @@ const CommentSchema = new mongoose.Schema({
     required: true
   },
 }, {
-  timestamps: true 
+  timestamps: true
 });
 
+// Virtual para obtener el usuario del comentario
+CommentSchema.virtual('user', {
+  ref: 'User',
+  localField: 'userId',
+  foreignField: '_id',
+  justOne: true
+});
+
+// Virtual para obtener el post del comentario
+CommentSchema.virtual('post', {
+  ref: 'Post',
+  localField: 'postId',
+  foreignField: '_id',
+  justOne: true
+});
 
 CommentSchema.set('toJSON', {
-  virtuals: true,
+  virtuals: false,
   transform: (_, ret) => {
     ret.id = ret._id;
     delete ret._id;
@@ -33,7 +44,7 @@ CommentSchema.set('toJSON', {
 });
 
 CommentSchema.set('toObject', {
-  virtuals: true,
+  virtuals: false,
   transform: (_, ret) => {
     ret.id = ret._id;
     delete ret._id;

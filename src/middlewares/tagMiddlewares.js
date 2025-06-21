@@ -1,65 +1,51 @@
 // src/middlewares/tagMiddlewares.js
 const Tag = require("../db/models/tag");
-
 const Post = require("../db/models/post");
+const { validateEntityExists, validateUniqueAttribute } = require('../utils/entityValidation');
+const { handleMongoError } = require('../utils/validation');
 
-const existTagModelById = (modelo) => {
-
+/**
+ * Middleware para verificar que un tag existe por ID
+ * @returns {Function} - Middleware function
+ */
+const existTagModelById = () => {
   return async (req, res, next) => {
     const tagId = req.params.tagId;
-    try {
 
-      const data = await modelo.findById(tagId);
+    try {
+      const data = await Tag.findById(tagId);
       if (!data) {
-        return res
-          .status(404)
-          .json({ message: `El tag id ${tagId} no se encuentra registrado` });
+        return res.status(404).json({ error: `Tag con ID ${tagId} no encontrado` });
       }
       next();
     } catch (err) {
-      console.error(err);
-      
-      if (err.name === 'CastError') {
-         return res.status(400).json({ message: `ID de tag ${tagId} no es válido` });
-      }
-      res.status(500).json({ error: 'Error al verificar la existencia del tag por ID' });
+      const errorResponse = handleMongoError(err, 'tag');
+      return res.status(errorResponse.statusCode).json(errorResponse);
     }
   };
-}
+};
 
+/**
+ * Middleware para verificar que un tag con nombre específico no existe
+ * @returns {Function} - Middleware function
+ */
 const existTagByName = () => {
-  return async (req, res, next) => {
-    const { name } = req.body;
-    console.log(name);
-    if (name) {
-      try {
+  return validateUniqueAttribute(Tag, 'name', 'tag', 'id');
+};
 
-        const tag = await Tag.findOne({ name: name.toLowerCase() }); // busca por nombre en minúsculas
-        if (tag) {
-          return res.status(400).json({
-            message: `Ya existe un tag con el nombre ${name}`
-          });
-        }
-      } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Error al verificar la existencia del tag por nombre' });
-      }
-    }
-    next();
-  }
-}
-
+/**
+ * Middleware para verificar que un tag está asociado a un post
+ * @returns {Function} - Middleware function
+ */
 const existTagInPost = () => {
   return async (req, res, next) => {
-    
     const { id: postId, tagId } = req.params;
-    try {
 
+    try {
       const post = await Post.findById(postId);
       if (!post) {
         return res.status(404).json({ error: 'Post no encontrado para verificar el tag' });
       }
-
 
       const tagExistsInPost = post.tags.some(tag => tag.toString() === tagId);
 
@@ -68,14 +54,11 @@ const existTagInPost = () => {
       }
       next();
     } catch (err) {
-      console.error(err);
-       if (err.name === 'CastError') {
-         return res.status(400).json({ message: `ID de post ${postId} o ID de tag ${tagId} no es válido` });
-      }
-      res.status(500).json({ error: 'Error al verificar si el tag está en el post' });
+      const errorResponse = handleMongoError(err, 'tag');
+      return res.status(errorResponse.statusCode).json(errorResponse);
     }
-  }
-}
+  };
+};
 
 module.exports = {
   existTagByName,

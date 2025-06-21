@@ -18,15 +18,15 @@ router.get('/', userController.getAllUsers);
 
 //GET - Obtener usuario por ID
 router.get('/:id',
-  genericMiddleware.validateId,
-  genericMiddleware.existModelById(User),
+  genericMiddleware.validateMongoId,
+  genericMiddleware.createEntityExistsValidator(User, 'Usuario'),
   userController.getUserById
 );
 
 //PUT - Actualizar usuario
 router.put('/:id',
-  genericMiddleware.validateId,
-  genericMiddleware.existModelById(User),
+  genericMiddleware.validateMongoId,
+  genericMiddleware.createEntityExistsValidator(User, 'Usuario'),
   genericMiddleware.schemaValidator(UpdateUserSchema),
   userMiddleware.existUserByAttribute('email'),
   userController.updateUser
@@ -34,7 +34,7 @@ router.put('/:id',
 
 //DELETE - Eliminar usuario con efecto cascada
 router.delete('/:id',
-  genericMiddleware.validateId,
+  genericMiddleware.validateMongoId,
   postMiddleware.deleteUserWithCascade,
   userController.deleteUser
 );

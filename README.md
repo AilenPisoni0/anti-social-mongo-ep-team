@@ -1,86 +1,388 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/NImNxoFn)
-# UnaHur - Red Anti-Social
 
-Se solicita el modelado y desarrollo de un sistema backend para una red social llamada **“UnaHur Anti-Social Net”**, inspirada en plataformas populares que permiten a los usuarios realizar publicaciones y recibir comentarios sobre las mismas.
+# Anti-Social Network API
 
-![Imagen](./assets/ANTI-SOCIALNET.jpeg)
+API REST para una red social antisocial. Desarrollada con Node.js, Express y MongoDB.
 
-# Contexto del Proyecto
+## Instalación
 
-En una primera reunión con los sponsors del proyecto, se definieron los siguientes requerimientos para el desarrollo de un **MVP (Producto Mínimo Viable)**:
+```bash
+# Clonar repositorio
+git clone <repository-url>
+cd anti-social-mongo-ep-team
 
-- El sistema debe permitir que un usuario registrado realice una publicación (post), incluyendo **obligatoriamente una descripción**. De forma opcional, se podrán asociar **una o más imágenes** a dicha publicación.
+# Instalar dependencias
+npm install
 
-- Las publicaciones pueden recibir **comentarios** por parte de otros usuarios.
+# Iniciar servicios con Docker
+docker-compose up -d
 
-- Las publicaciones pueden estar asociadas a **etiquetas (tags)**. Una misma etiqueta puede estar vinculada a múltiples publicaciones.
+# Ejecutar seeders para datos de prueba
+npm run seed
 
-- Es importante que los **comentarios más antiguos que X meses** (valor configurable mediante variables de entorno, por ejemplo, 6 meses) **no se muestren** en la visualización de los posteos.
+# Iniciar servidor
+npm start
+```
 
-####
+## Configuración
 
-# Entidades y Reglas de Negocio
+- **Puerto del servidor**: Configurado mediante variable de entorno `PORT` (por defecto: 3001)
+- **Base de datos MongoDB**: Configurada mediante variable de entorno `MONGO_URI`
+- **Redis**: Configurado mediante variable de entorno `REDIS_URL` (por defecto: redis://localhost:6379)
+- **Filtrado de comentarios**: Configurado mediante variable de entorno `MAX_COMMENT_AGE_MONTHS` (por defecto: 6 meses)
+- **Entorno**: Configurado mediante variable de entorno `NODE_ENV` (por defecto: development)
 
-Los sponsors definieron los siguientes nombres y descripciones para las entidades:
+## Endpoints
 
-- **User**: Representa a los usuarios registrados en el sistema. El campo `nickName` debe ser **único** y funcionará como identificador principal del usuario.
+### Users
 
-- **Post**: Publicación realizada por un usuario en una fecha determinada que contiene el texto que desea publicar. Puede tener **cero o más imágenes** asociadas. Debe contemplarse la posibilidad de **agregar o eliminar imágenes** posteriormente.
+**GET /users** - Obtener todos los usuarios
+```json
+[
+  {
+    "id": "6856ea88be5012c571952977",
+    "nickName": "usuario1",
+    "email": "usuario1@example.com",
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z"
+  }
+]
+```
 
-- **Post_Images**: Entidad que registra las imágenes asociadas a los posts. Para el MVP, solo se requiere almacenar la **URL de la imagen alojada**.
+**GET /users/:id** - Obtener un usuario por ID
 
-- **Comment**: Comentario que un usuario puede realizar sobre una publicación. Incluye la fecha en la que fue realizado y una indicación de si está **visible o no**, dependiendo de la configuración (X meses).
+**POST /users** - Crear un usuario
+```json
+{
+  "nickName": "john_doe_2",
+  "email": "john2@example.com"
+}
+```
 
-- **Tag**: Etiqueta que puede ser asignada a un post. Una etiqueta puede estar asociada a **muchos posts**, y un post puede tener **múltiples etiquetas**.
+**PUT /users/:id** - Actualizar un usuario
+```json
+{
+  "email": "john.updated@example.com"
+}
+```
 
-# Requerimientos Técnicos
+**DELETE /users/:id** - Eliminar un usuario (hard delete con cascada)
 
-1. **Modelado de Datos**
+### Posts
 
-   - Diseñar el modelo documental que represtente todas las entidades definidas por los sponsor del proyecto. Queda a su criterio si usan relaciones embebidas o relaciones referenciadas a otros documentos.
+**GET /posts** - Obtener todos los posts (con relaciones pobladas)
 
-### Ejemplo referenciadas
+**GET /posts/:id** - Obtener un post por ID (con relaciones pobladas)
 
-![referenciadas](./assets/Referenciada.png)
+**POST /posts** - Crear un post
+```json
+{
+  "description": "Mi primer post en la red antisocial!",
+  "userId": "6856ea88be5012c571952977",
+  "tags": ["6856ea88be5012c57195297d"],
+  "imagenes": ["https://ejemplo.com/imagen1.jpg"]
+}
+```
 
-2. **Desarrollo del Backend**
+**PUT /posts/:id** - Actualizar un post
+```json
+{
+  "description": "Post actualizado",
+  "userId": "6856ea88be5012c571952978"
+}
+```
 
-   - Crear los **endpoints CRUD** necesarios para cada entidad.
+**DELETE /posts/:id** - Eliminar un post (hard delete con cascada)
 
-   - Implementar las rutas necesarias para gestionar las relaciones entre entidades (por ejemplo: asociar imágenes a un post, etiquetas a una publicación, etc.).
+### Post Images
 
-   - Desarrollar las validaciones necesarias para asegurar la integridad de los datos (schemas, validaciones de integridad referencial).
+**GET /posts/:id/images** - Obtener imágenes de un post
 
-   - Desarrollar las funciones controladoras con una única responsabiliad evitando realizar comprobaciones innecesarias en esta parte del código.
+**POST /posts/:id/images** - Agregar imagen a un post
+```json
+{
+  "url": "https://example.com/image.jpg"
+}
+```
 
-3. **Configuración y Portabilidad**
+**DELETE /posts/:id/images/:imageId** - Eliminar imagen de un post
 
-   - El sistema debe poder cambiar de **base de datos** de forma transparente, utilizando configuración e instalación de dependencias adecuadas.
+### Post Tags
 
-   - El sistema debe permitir configurar el **puerto de ejecución y variables de entorno** fácilmente.
+**GET /posts/:id/tags** - Obtener tags de un post
 
-4. **Documentación**
+**POST /posts/:id/tags/:tagId** - Agregar tag a un post
 
-   - Generar la documentación de la API utilizando **Swagger (formato YAML)**, incluyendo todos los endpoints definidos.
+**DELETE /posts/:id/tags/:tagId** - Eliminar tag de un post
 
-5. **Colecciones de Prueba**
+### Post Comments
 
-   - Entregar las colecciones necesarias para realizar pruebas (por ejemplo, colecciones de Postman o archivos JSON de ejemplo).
+**GET /posts/:id/comments** - Obtener comentarios de un post (filtrados por antigüedad)
 
-###
+### Comments
 
-# Recomendaciones y ayudas
+**GET /comments** - Obtener todos los comentarios
 
-Les entregamos este link que apunta a un front-end ya desarrollado para que puedan investigarlo y puedan crear el back-end que se ajuste lo maximo posiblel funcionamiento del front.
+**GET /comments/:id** - Obtener un comentario por ID
 
-[https://unahur.vmdigitai.com/redes-front/users](https://unahur.vmdigitai.com/redes-front/users)
+**POST /comments** - Crear un comentario
+```json
+{
+  "content": "Gran post!",
+  "userId": "6856ea88be5012c571952977",
+  "postId": "6856ea88be5012c571952985"
+}
+```
 
-Por otro lado les dejamos la documentació de los endpoint para que también la puedan revisar y armar siguiendo este link
+**PUT /comments/:id** - Actualizar un comentario
+```json
+{
+  "content": "Excelente post actualizado!"
+}
+```
 
-[https://unahur.vmdigitai.com/swagger/](https://unahur.vmdigitai.com/swagger/)
+**DELETE /comments/:id** - Eliminar un comentario
 
-# Bonus
+### Tags
 
-- Hace el upload de las imganes que se asocian a un POST que lo guarden en una carpeta de imagenes dentro del servidor web.
-- ¿Cómo modelarías que un usuario pueda "seguir" a otros usuarios, y a su vez ser seguido por muchos? Followers
-- Con la información de los post no varia muy seguido que estrategias podrian utilizar la que la información no sea constantemente consultada desde la base de datos.
+**GET /tags** - Obtener todos los tags
+
+**GET /tags/:id** - Obtener un tag por ID
+
+**POST /tags** - Crear un tag
+```json
+{
+  "name": "tecnología"
+}
+```
+
+**PUT /tags/:id** - Actualizar un tag
+```json
+{
+  "name": "tecnología-actualizada"
+}
+```
+
+**DELETE /tags/:id** - Eliminar un tag (solo desasocia de posts)
+
+## Base URL
+
+La API corre por defecto en:
+
+```
+http://localhost:3001
+```
+
+## Características
+
+- Gestión de usuarios con nickName y email únicos
+- Publicaciones con imágenes y tags
+- Sistema de comentarios con filtrado por antigüedad configurable
+- Hard delete implementado con cascada apropiada
+- Documentación completa con Swagger
+- Caché con Redis para optimizar consultas
+- Validaciones robustas con Joi
+- Manejo de errores consistente
+
+## Tecnologías
+
+- **Node.js** - Runtime de JavaScript
+- **Express** - Framework web
+- **MongoDB** - Base de datos NoSQL
+- **Mongoose** - ODM para MongoDB
+- **Redis** - Caché en memoria
+- **Joi** - Validación de datos
+- **Swagger** - Documentación de API
+- **Docker** - Contenedores para servicios
+
+## Estructura de Datos
+
+### Entidades Principales
+
+#### Users
+- `nickName` único
+- `email` único
+- Hard delete con cascada
+- Timestamps automáticos
+
+#### Posts
+- `description` (requerido)
+- `userId` (referencia a User)
+- `tags` (array de referencias a Tags)
+- Relaciones pobladas automáticamente
+- Hard delete con cascada
+- Timestamps automáticos
+
+#### Comments
+- `content` (requerido)
+- `userId` (referencia a User)
+- `postId` (referencia a Post)
+- Filtrado por antigüedad configurable
+- Hard delete
+- Timestamps automáticos
+
+#### Tags
+- `name` único
+- Relación muchos a muchos con posts
+- Hard delete (solo desasocia)
+- Timestamps automáticos
+
+#### PostImages
+- `url` (requerido)
+- `postId` (referencia a Post)
+- Hard delete
+- Timestamps automáticos
+
+## Documentación de la API (Swagger)
+
+La documentación interactiva de la API está disponible a través de Swagger UI.
+
+### Para acceder:
+
+1. Asegúrate de que el servidor esté corriendo:
+   ```bash
+   npm start
+   ```
+
+2. Accede a la documentación en tu navegador:
+   ```
+   http://localhost:3001/api-docs/
+   ```
+
+### Características de la documentación:
+
+- Todos los endpoints documentados
+- Schemas detallados para cada entidad
+- Ejemplos de requests y responses
+- Códigos de estado HTTP apropiados
+- Validaciones y patrones especificados
+- Interfaz interactiva para probar endpoints
+
+## Características de Implementación
+
+- **Hard delete** con cascada apropiada
+- **Validaciones** con Joi schemas
+- **Middlewares** genéricos para validaciones comunes
+- **Filtrado automático** de comentarios antiguos
+- **Caché con Redis** para optimizar consultas
+- **Relaciones pobladas** automáticamente en posts
+- **Manejo de errores** consistente
+- **Variables de entorno** configurables
+
+## Colecciones de Prueba
+
+El proyecto incluye colecciones de Postman para facilitar las pruebas:
+
+### Archivos incluidos:
+- `postman/anti-social-network.postman_collection.json` - Colección con todos los endpoints
+- `postman/anti-social-network.postman_environment.json` - Variables de entorno
+
+### Para usar las colecciones:
+
+1. **Importar en Postman:**
+   - Colección: `anti-social-network.postman_collection.json`
+   - Environment: `anti-social-network.postman_environment.json`
+
+2. **Ejecutar seeders:**
+   ```bash
+   npm run seed
+   ```
+
+3. **Obtener IDs reales** de las respuestas de la API y actualizar las variables del environment
+
+## Optimización con Redis
+
+El sistema implementa caché con Redis para optimizar las consultas. El tiempo de vida (TTL) de la caché depende del tipo de dato:
+
+### TTL por tipo de dato:
+- **Users:** 30 minutos (cambian poco)
+- **Tags:** 30 minutos (cambian poco)
+- **Post Images:** 30 minutos (URLs estáticas)
+- **Posts:** 10 minutos (cambian moderadamente)
+- **Comments:** 2 minutos (cambian frecuentemente)
+
+### Beneficios:
+- Reducción significativa de consultas a la base de datos
+- Mejor tiempo de respuesta para lecturas frecuentes
+- Menor carga en la base de datos
+
+### Estrategia para optimizar el acceso a información de posts que no varía frecuentemente
+
+Para optimizar las consultas a posts que no varían frecuentemente, podemos implementar una estrategia de caché usando Redis.
+
+Esta implementación ofrece:
+
+- Reducción significativa de consultas a la base de datos
+- Mejor tiempo de respuesta para lecturas frecuentes
+- Menor carga en la base de datos
+
+Consideración adicional:
+
+- Configurar un TTL (Time To Live) apropiado según el caso de uso. Por ejemplo, el TTL de los comments debería ser más corto que el de la información del usuario, ya que los comentarios cambian mucho más seguido.
+
+## Estructura del Proyecto
+
+```
+anti-social-mongo-ep-team/
+├── src/
+│   ├── controllers/          # Lógica de negocio
+│   │   ├── config/          # Configuración de DB y Redis
+│   │   ├── models/          # Modelos de Mongoose
+│   │   └── seeders/         # Datos de prueba
+│   ├── docs/                # Documentación Swagger
+│   ├── middlewares/         # Middlewares de validación
+│   ├── routes/              # Definición de rutas
+│   ├── schemas/             # Schemas de validación Joi
+│   └── utils/               # Utilidades
+├── postman/                 # Colecciones de prueba
+├── docker-compose.yml       # Configuración de servicios
+└── package.json
+```
+
+## Scripts Disponibles
+
+```bash
+npm start          # Iniciar servidor en producción
+npm run dev        # Iniciar servidor en desarrollo con nodemon
+npm run seed       # Ejecutar seeders para crear datos de prueba
+```
+
+## Bonus
+
+### ¿Cómo modelar que un usuario pueda "seguir" a otros usuarios y ser seguido por muchos? (Followers)
+
+Para implementar la funcionalidad de seguidores (followers) en MongoDB, se recomienda agregar campos de referencia en el modelo de usuario:
+
+- **followers:** Array de ObjectId de usuarios que siguen a este usuario.
+- **following:** Array de ObjectId de usuarios a los que este usuario sigue.
+
+Ejemplo de esquema:
+
+```js
+const userSchema = new mongoose.Schema({
+  nickName: { type: String, unique: true, required: true },
+  email: { type: String, unique: true, required: true },
+  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+});
+```
+
+Esto permite:
+- Consultar fácilmente los seguidores y seguidos de un usuario.
+- Implementar endpoints como `/users/:id/followers` y `/users/:id/following`.
+- Agregar o quitar seguidores de manera eficiente usando operadores de MongoDB (`$addToSet`, `$pull`).
+
+### Estrategia para optimizar el acceso a información de posts que no varía frecuentemente
+
+Para optimizar las consultas a posts que no varían frecuentemente, podemos implementar una estrategia de caché usando Redis.
+
+Esta implementación ofrece:
+
+- Reducción significativa de consultas a la base de datos
+- Mejor tiempo de respuesta para lecturas frecuentes
+- Menor carga en la base de datos
+
+Consideración adicional:
+
+- Configurar un TTL (Time To Live) apropiado según el caso de uso. Por ejemplo, el TTL de los comments debería ser más corto que el de la información del usuario, ya que los comentarios cambian mucho más seguido.
+
