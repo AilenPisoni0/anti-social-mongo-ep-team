@@ -5,6 +5,7 @@ const Tag = require('../db/models/tag');
 const Comment = require('../db/models/comment');
 const User = require('../db/models/user');
 const { redisClient } = require('../db/config/redisClient');
+const { uploadMiddleware } = require("../middlewares");
 
 // Helper para obtener posts con formato unificado
 const getPostWithPopulatedData = async (postId) => {
@@ -50,7 +51,8 @@ const getPostsWithPopulatedData = async () => {
 module.exports = {
   createPost: async (req, res) => {
     try {
-      const { description, userId, tags, imagenes } = req.body;
+      const { description, userId, tags } = req.body;
+      const files = req.files;
 
       const newPost = new Post({
         description,
@@ -60,11 +62,11 @@ module.exports = {
 
       await newPost.save();
 
-      // Crear imágenes si se proporcionaron
-      if (imagenes && imagenes.length > 0) {
-        const postImages = imagenes.map(url => ({
+      // Crear imágenes si se subieron archivos
+      if (files && files.length > 0) {
+        const postImages = files.map(file => ({
           postId: newPost._id,
-          url
+          url: `/uploads/images/${file.filename}` // Ruta relativa al servidor
         }));
 
         await PostImage.insertMany(postImages);
@@ -208,11 +210,15 @@ module.exports = {
   addImageFromPost: async (req, res) => {
     try {
       const { id } = req.params;
-      const { url } = req.body;
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({ error: 'Debe subir una imagen' });
+      }
 
       const newImage = new PostImage({
         postId: id,
-        url
+        url: `/uploads/images/${file.filename}`
       });
       await newImage.save();
 
@@ -223,6 +229,42 @@ module.exports = {
     } catch (err) {
       console.error('Error en addImageFromPost:', err);
       res.status(500).json({ error: 'No se pudo agregar la imagen' });
+    }
+  },
+
+  updateImageFromPost: async (req, res) => {
+    try {
+      const { id, imageId } = req.params;
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({ error: 'Debe subir una imagen' });
+      }
+
+      const image = await PostImage.findById(imageId);
+      if (!image) {
+        return res.status(404).json({ error: 'Imagen no encontrada' });
+      }
+
+      // borrar el archivo anterior del disco
+      const fs = require('fs');
+      const path = require('path');
+      if (image.url) {
+        try {
+          fs.unlinkSync(path.join(__dirname, '../../', image.url));
+        } catch (e) { /* ignorar error si no existe */ }
+      }
+
+      image.url = `/uploads/images/${file.filename}`;
+      await image.save();
+
+      await redisClient.del(`post:${id}`);
+      await redisClient.del('posts:todos');
+
+      res.status(200).json(image);
+    } catch (err) {
+      console.error('Error en updateImageFromPost:', err);
+      res.status(500).json({ error: 'No se pudo actualizar la imagen' });
     }
   },
 

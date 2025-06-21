@@ -22,6 +22,7 @@ app.use("/posts", postRoute);
 app.use('/tags', tagRoute);
 app.use("/comments", commentRoute);
 app.use("/post-images", postImageRoute);
+app.use('/uploads/images', express.static('uploads/images'));
 
 // conexion a bases de datos
 conectarDB()

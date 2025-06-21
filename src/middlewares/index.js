@@ -5,5 +5,6 @@ module.exports = {
   tagMiddleware: require("./tagMiddlewares"),
   postImageMiddleware: require("./postImageMiddlewares"),
   postMiddleware: require("./postMiddlewares"),
-  fileValidationMiddleware: require("./fileValidationMiddleware")
+  fileValidationMiddleware: require("./fileValidationMiddleware"),
+  uploadMiddleware: require("./uploadMiddleware")
 };
