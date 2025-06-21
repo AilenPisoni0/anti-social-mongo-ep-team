@@ -1,86 +1,412 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/NImNxoFn)
-# UnaHur - Red Anti-Social
 
-Se solicita el modelado y desarrollo de un sistema backend para una red social llamada **“UnaHur Anti-Social Net”**, inspirada en plataformas populares que permiten a los usuarios realizar publicaciones y recibir comentarios sobre las mismas.
+# Anti-Social Network API
 
-![Imagen](./assets/ANTI-SOCIALNET.jpeg)
+API REST para una red social antisocial. Desarrollada con Node.js, Express y MongoDB.
 
-# Contexto del Proyecto
+## Configuración
 
-En una primera reunión con los sponsors del proyecto, se definieron los siguientes requerimientos para el desarrollo de un **MVP (Producto Mínimo Viable)**:
+### Instalar dependencias:
+```bash
+npm install
+```
 
-- El sistema debe permitir que un usuario registrado realice una publicación (post), incluyendo **obligatoriamente una descripción**. De forma opcional, se podrán asociar **una o más imágenes** a dicha publicación.
+### Configurar variables de entorno:
+Crear un archivo `.env` con las siguientes variables:
+```env
+# Configuración del servidor
+PORT=3001
+NODE_ENV=development
 
-- Las publicaciones pueden recibir **comentarios** por parte de otros usuarios.
+# Base de datos MongoDB
+MONGO_URI=mongodb://admin:admin123@localhost:27017/antisocial_db?authSource=admin
 
-- Las publicaciones pueden estar asociadas a **etiquetas (tags)**. Una misma etiqueta puede estar vinculada a múltiples publicaciones.
+# Redis
+REDIS_URL=redis://localhost:6379
 
-- Es importante que los **comentarios más antiguos que X meses** (valor configurable mediante variables de entorno, por ejemplo, 6 meses) **no se muestren** en la visualización de los posteos.
+# Configuración de comentarios
+MAX_COMMENT_AGE_MONTHS=6
+```
 
-####
+### Crear y poblar la base de datos:
+```bash
+# Ejecutar seeders para crear datos de prueba
+npm run seed
+```
 
-# Entidades y Reglas de Negocio
+### Iniciar servicios con Docker:
+```bash
+# Iniciar MongoDB y Redis
+docker-compose up -d
 
-Los sponsors definieron los siguientes nombres y descripciones para las entidades:
+# Iniciar servidor
+npm start
+```
 
-- **User**: Representa a los usuarios registrados en el sistema. El campo `nickName` debe ser **único** y funcionará como identificador principal del usuario.
+## Endpoints
 
-- **Post**: Publicación realizada por un usuario en una fecha determinada que contiene el texto que desea publicar. Puede tener **cero o más imágenes** asociadas. Debe contemplarse la posibilidad de **agregar o eliminar imágenes** posteriormente.
+### Users
 
-- **Post_Images**: Entidad que registra las imágenes asociadas a los posts. Para el MVP, solo se requiere almacenar la **URL de la imagen alojada**.
+**GET /users** - Obtener todos los usuarios
+```json
+[
+  {
+    "id": "6856ea88be5012c571952977",
+    "nickName": "usuario1",
+    "email": "usuario1@example.com",
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z"
+  }
+]
+```
 
-- **Comment**: Comentario que un usuario puede realizar sobre una publicación. Incluye la fecha en la que fue realizado y una indicación de si está **visible o no**, dependiendo de la configuración (X meses).
+**GET /users/:id** - Obtener un usuario por ID
 
-- **Tag**: Etiqueta que puede ser asignada a un post. Una etiqueta puede estar asociada a **muchos posts**, y un post puede tener **múltiples etiquetas**.
+**POST /users** - Crear un usuario
+```json
+{
+  "nickName": "john_doe_2",
+  "email": "john2@example.com"
+}
+```
 
-# Requerimientos Técnicos
+**PUT /users/:id** - Actualizar un usuario
+```json
+{
+  "email": "john.updated@example.com"
+}
+```
 
-1. **Modelado de Datos**
+**DELETE /users/:id** - Eliminar un usuario (hard delete con cascada)
 
-   - Diseñar el modelo documental que represtente todas las entidades definidas por los sponsor del proyecto. Queda a su criterio si usan relaciones embebidas o relaciones referenciadas a otros documentos.
+### Posts
 
-### Ejemplo referenciadas
+**GET /posts** - Obtener todos los posts (con relaciones pobladas)
 
-![referenciadas](./assets/Referenciada.png)
+**GET /posts/:id** - Obtener un post por ID (con relaciones pobladas)
 
-2. **Desarrollo del Backend**
+**POST /posts** - Crear un post
+```json
+{
+  "description": "Mi primer post en la red antisocial!",
+  "userId": "6856ea88be5012c571952977",
+  "tags": ["6856ea88be5012c57195297d"],
+  "imagenes": ["https://ejemplo.com/imagen1.jpg"]
+}
+```
 
-   - Crear los **endpoints CRUD** necesarios para cada entidad.
+**PUT /posts/:id** - Actualizar un post
+```json
+{
+  "description": "Post actualizado",
+  "userId": "6856ea88be5012c571952978"
+}
+```
 
-   - Implementar las rutas necesarias para gestionar las relaciones entre entidades (por ejemplo: asociar imágenes a un post, etiquetas a una publicación, etc.).
+**DELETE /posts/:id** - Eliminar un post (hard delete con cascada)
 
-   - Desarrollar las validaciones necesarias para asegurar la integridad de los datos (schemas, validaciones de integridad referencial).
+### Post Images
 
-   - Desarrollar las funciones controladoras con una única responsabiliad evitando realizar comprobaciones innecesarias en esta parte del código.
+**GET /posts/:id/images** - Obtener imágenes de un post
 
-3. **Configuración y Portabilidad**
+**POST /posts/:id/images** - Agregar imagen a un post
+```json
+{
+  "url": "https://example.com/image.jpg"
+}
+```
 
-   - El sistema debe poder cambiar de **base de datos** de forma transparente, utilizando configuración e instalación de dependencias adecuadas.
+**DELETE /posts/:id/images/:imageId** - Eliminar imagen de un post
 
-   - El sistema debe permitir configurar el **puerto de ejecución y variables de entorno** fácilmente.
+### Post Tags
 
-4. **Documentación**
+**GET /posts/:id/tags** - Obtener tags de un post
 
-   - Generar la documentación de la API utilizando **Swagger (formato YAML)**, incluyendo todos los endpoints definidos.
+**POST /posts/:id/tags/:tagId** - Agregar tag a un post
 
-5. **Colecciones de Prueba**
+**DELETE /posts/:id/tags/:tagId** - Eliminar tag de un post
 
-   - Entregar las colecciones necesarias para realizar pruebas (por ejemplo, colecciones de Postman o archivos JSON de ejemplo).
+### Post Comments
 
-###
+**GET /posts/:id/comments** - Obtener comentarios de un post (filtrados por antigüedad)
 
-# Recomendaciones y ayudas
+### Comments
 
-Les entregamos este link que apunta a un front-end ya desarrollado para que puedan investigarlo y puedan crear el back-end que se ajuste lo maximo posiblel funcionamiento del front.
+**GET /comments** - Obtener todos los comentarios
 
-[https://unahur.vmdigitai.com/redes-front/users](https://unahur.vmdigitai.com/redes-front/users)
+**GET /comments/:id** - Obtener un comentario por ID
 
-Por otro lado les dejamos la documentació de los endpoint para que también la puedan revisar y armar siguiendo este link
+**POST /comments** - Crear un comentario
+```json
+{
+  "content": "Gran post!",
+  "userId": "6856ea88be5012c571952977",
+  "postId": "6856ea88be5012c571952985"
+}
+```
 
-[https://unahur.vmdigitai.com/swagger/](https://unahur.vmdigitai.com/swagger/)
+**PUT /comments/:id** - Actualizar un comentario
+```json
+{
+  "content": "Excelente post actualizado!"
+}
+```
 
-# Bonus
+**DELETE /comments/:id** - Eliminar un comentario
 
-- Hace el upload de las imganes que se asocian a un POST que lo guarden en una carpeta de imagenes dentro del servidor web.
-- ¿Cómo modelarías que un usuario pueda "seguir" a otros usuarios, y a su vez ser seguido por muchos? Followers
-- Con la información de los post no varia muy seguido que estrategias podrian utilizar la que la información no sea constantemente consultada desde la base de datos.
+### Tags
+
+**GET /tags** - Obtener todos los tags
+
+**GET /tags/:id** - Obtener un tag por ID
+
+**POST /tags** - Crear un tag
+```json
+{
+  "name": "tecnología"
+}
+```
+
+**PUT /tags/:id** - Actualizar un tag
+```json
+{
+  "name": "tecnología-actualizada"
+}
+```
+
+**DELETE /tags/:id** - Eliminar un tag (solo desasocia de posts)
+
+## Base URL
+
+La API corre por defecto en:
+
+```
+http://localhost:3001
+```
+
+## Características
+
+- ✅ Gestión de usuarios con nickName y email únicos
+- ✅ Publicaciones con imágenes y tags
+- ✅ Sistema de comentarios con filtrado por antigüedad configurable
+- ✅ Hard delete implementado con cascada apropiada
+- ✅ Documentación completa con Swagger
+- ✅ Caché con Redis para optimizar consultas
+- ✅ Validaciones robustas con Joi
+- ✅ Manejo de errores consistente
+
+## Tecnologías
+
+- **Node.js** - Runtime de JavaScript
+- **Express** - Framework web
+- **MongoDB** - Base de datos NoSQL
+- **Mongoose** - ODM para MongoDB
+- **Redis** - Caché en memoria
+- **Joi** - Validación de datos
+- **Swagger** - Documentación de API
+- **Docker** - Contenedores para servicios
+
+## Estructura de Datos
+
+### Entidades Principales
+
+#### Users
+- `nickName` único
+- `email` único
+- Hard delete con cascada
+- Timestamps automáticos
+
+#### Posts
+- `description` (requerido)
+- `userId` (referencia a User)
+- `tags` (array de referencias a Tags)
+- Relaciones pobladas automáticamente
+- Hard delete con cascada
+- Timestamps automáticos
+
+#### Comments
+- `content` (requerido)
+- `userId` (referencia a User)
+- `postId` (referencia a Post)
+- Filtrado por antigüedad configurable
+- Hard delete
+- Timestamps automáticos
+
+#### Tags
+- `name` único
+- Relación muchos a muchos con posts
+- Hard delete (solo desasocia)
+- Timestamps automáticos
+
+#### PostImages
+- `url` (requerido)
+- `postId` (referencia a Post)
+- Hard delete
+- Timestamps automáticos
+
+### Relaciones
+
+- **users → posts**: Uno a muchos (1:N)
+- **users → comments**: Uno a muchos (1:N)
+- **posts → comments**: Uno a muchos (1:N)
+- **posts → post_images**: Uno a muchos (1:N)
+- **posts ↔ tags**: Muchos a muchos (N:M)
+
+## Configuración
+
+### Variables de entorno necesarias en `.env`:
+
+```env
+# Server Configuration
+PORT=3001
+NODE_ENV=development
+
+# Database Configuration
+MONGO_URI=mongodb://admin:admin123@localhost:27017/antisocial_db?authSource=admin
+
+# Redis Configuration
+REDIS_URL=redis://localhost:6379
+
+# Application Settings
+MAX_COMMENT_AGE_MONTHS=6
+```
+
+## Instalación
+
+```bash
+# Clonar repositorio
+git clone <repository-url>
+cd anti-social-mongo-ep-team
+
+# Instalar dependencias
+npm install
+
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus configuraciones
+
+# Iniciar servicios con Docker
+docker-compose up -d
+
+# Ejecutar seeders para datos de prueba
+npm run seed
+
+# Iniciar servidor
+npm start
+```
+
+## Documentación de la API (Swagger)
+
+La documentación interactiva de la API está disponible a través de Swagger UI.
+
+### Para acceder:
+
+1. Asegúrate de que el servidor esté corriendo:
+   ```bash
+   npm start
+   ```
+
+2. Accede a la documentación en tu navegador:
+   ```
+   http://localhost:3001/api-docs/
+   ```
+
+### Características de la documentación:
+
+- ✅ Todos los endpoints documentados
+- ✅ Schemas detallados para cada entidad
+- ✅ Ejemplos de requests y responses
+- ✅ Códigos de estado HTTP apropiados
+- ✅ Validaciones y patrones especificados
+- ✅ Interfaz interactiva para probar endpoints
+
+## Características de Implementación
+
+- ✅ **Hard delete** con cascada apropiada
+- ✅ **Validaciones** con Joi schemas
+- ✅ **Middlewares** genéricos para validaciones comunes
+- ✅ **Filtrado automático** de comentarios antiguos
+- ✅ **Caché con Redis** para optimizar consultas
+- ✅ **Relaciones pobladas** automáticamente en posts
+- ✅ **Manejo de errores** consistente
+- ✅ **Variables de entorno** configurables
+
+## Colecciones de Prueba
+
+El proyecto incluye colecciones de Postman para facilitar las pruebas:
+
+### Archivos incluidos:
+- `postman/anti-social-network.postman_collection.json` - Colección con todos los endpoints
+- `postman/anti-social-network.postman_environment.json` - Variables de entorno
+
+### Para usar las colecciones:
+
+1. **Importar en Postman:**
+   - Colección: `anti-social-network.postman_collection.json`
+   - Environment: `anti-social-network.postman_environment.json`
+
+2. **Ejecutar seeders:**
+   ```bash
+   npm run seed
+   ```
+
+3. **Obtener IDs reales** de las respuestas de la API y actualizar las variables del environment
+
+## Optimización con Redis
+
+El sistema implementa caché con Redis para optimizar las consultas:
+
+### Beneficios:
+- ✅ **Reducción significativa** de consultas a la base de datos
+- ✅ **Mejor tiempo de respuesta** para lecturas frecuentes
+- ✅ **Menor carga** en la base de datos
+- ✅ **TTL configurable** según el tipo de datos
+
+### Estrategia de caché:
+- **Posts**: Caché de 5 minutos (datos que cambian poco)
+- **Users**: Caché de 5 minutos
+- **Tags**: Caché de 5 minutos
+- **Comments**: Sin caché (datos que cambian frecuentemente)
+
+### Invalidación automática:
+- Al crear/actualizar/eliminar entidades se invalidan los cachés relacionados
+- Mantiene consistencia de datos
+
+## Estructura del Proyecto
+
+```
+anti-social-mongo-ep-team/
+├── src/
+│   ├── controllers/          # Lógica de negocio
+│   │   ├── config/          # Configuración de DB y Redis
+│   │   ├── models/          # Modelos de Mongoose
+│   │   └── seeders/         # Datos de prueba
+│   ├── docs/                # Documentación Swagger
+│   ├── middlewares/         # Middlewares de validación
+│   ├── routes/              # Definición de rutas
+│   ├── schemas/             # Schemas de validación Joi
+│   └── utils/               # Utilidades
+├── postman/                 # Colecciones de prueba
+├── docker-compose.yml       # Configuración de servicios
+└── package.json
+```
+
+## Scripts Disponibles
+
+```bash
+npm start          # Iniciar servidor en producción
+npm run dev        # Iniciar servidor en desarrollo con nodemon
+npm run seed       # Ejecutar seeders para crear datos de prueba
+```
+
+## Contribución
+
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
