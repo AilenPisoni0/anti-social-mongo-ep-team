@@ -18,6 +18,13 @@ const createPostSchema = Joi.object({
     "array.base": "Los tags deben proporcionarse como un array",
     "string.length": "El ID de cada tag debe tener 24 caracteres",
     "string.hex": "El ID de cada tag debe ser un hexadecimal válido"
+  }),
+  imagenes: Joi.array().items(
+    Joi.string().uri()
+  ).max(5).optional().messages({
+    "array.base": "Las imágenes deben proporcionarse como un array de URLs",
+    "array.max": "No se pueden subir más de {#limit} imágenes",
+    "string.uri": "Cada imagen debe ser una URL válida"
   })
 });
 
@@ -37,6 +44,13 @@ const updatePostSchema = Joi.object({
     "array.base": "Los tags deben proporcionarse como un array",
     "string.length": "El ID de cada tag debe tener 24 caracteres",
     "string.hex": "El ID de cada tag debe ser un hexadecimal válido"
+  }),
+  imagenes: Joi.array().items(
+    Joi.string().uri()
+  ).max(5).optional().messages({
+    "array.base": "Las imágenes deben proporcionarse como un array de URLs",
+    "array.max": "No se pueden subir más de {#limit} imágenes",
+    "string.uri": "Cada imagen debe ser una URL válida"
   })
 }).min(1);
 
