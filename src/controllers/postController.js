@@ -1,14 +1,58 @@
 const mongoose = require('mongoose');
 const Post = require('../db/models/post');
+const PostImage = require('../db/models/postImage');
 const Tag = require('../db/models/tag');
 const Comment = require('../db/models/comment');
 const User = require('../db/models/user');
 const { redisClient } = require('../db/config/redisClient');
+const { uploadMiddleware } = require("../middlewares");
+
+// Helper para obtener posts con formato unificado
+const getPostWithPopulatedData = async (postId) => {
+  const maxAgeMonths = parseInt(process.env.MAX_COMMENT_AGE_MONTHS) || 6;
+  const cutoffDate = new Date();
+  cutoffDate.setMonth(cutoffDate.getMonth() - maxAgeMonths);
+
+  return await Post.findById(postId)
+    .populate('tags', 'name')
+    .populate('postImages', 'url')
+    .populate({
+      path: 'comments',
+      match: { createdAt: { $gte: cutoffDate } },
+      populate: {
+        path: 'userId',
+        select: 'nickName'
+      }
+    })
+    .lean();
+};
+
+// Helper para obtener múltiples posts con formato unificado
+const getPostsWithPopulatedData = async () => {
+  const maxAgeMonths = parseInt(process.env.MAX_COMMENT_AGE_MONTHS) || 6;
+  const cutoffDate = new Date();
+  cutoffDate.setMonth(cutoffDate.getMonth() - maxAgeMonths);
+
+  return await Post.find()
+    .populate('tags', 'name')
+    .populate('postImages', 'url')
+    .populate({
+      path: 'comments',
+      match: { createdAt: { $gte: cutoffDate } },
+      populate: {
+        path: 'userId',
+        select: 'nickName'
+      }
+    })
+    .sort({ createdAt: -1 })
+    .lean();
+};
 
 module.exports = {
   createPost: async (req, res) => {
     try {
       const { description, userId, tags } = req.body;
+      const files = req.files;
 
       const newPost = new Post({
         description,
@@ -17,12 +61,26 @@ module.exports = {
       });
 
       await newPost.save();
+
+      // Crear imágenes si se subieron archivos
+      if (files && files.length > 0) {
+        const postImages = files.map(file => ({
+          postId: newPost._id,
+          url: `/uploads/images/${file.filename}` // Ruta relativa al servidor
+        }));
+
+        await PostImage.insertMany(postImages);
+      }
+
+      // Obtener el post con formato unificado
+      const postWithData = await getPostWithPopulatedData(newPost._id);
+
       await redisClient.del('posts:todos');
 
-      res.status(201).json(newPost);
+      res.status(201).json(postWithData);
     } catch (err) {
       console.error(err);
-      res.status(500).json({ error: 'No se pudo crear el post' });
+      res.status(500).json({ error: 'Error al crear la publicación' });
     }
   },
 
@@ -32,32 +90,24 @@ module.exports = {
       const cached = await redisClient.get(cacheKey);
       if (cached) {
         console.log('[Redis] Post desde caché');
-        return res.status(200).json(JSON.parse(cached));
+        const posts = JSON.parse(cached);
+        if (posts.length === 0) {
+          return res.status(204).send();
+        }
+        return res.status(200).json(posts);
       }
 
-      const maxAgeMonths = parseInt(process.env.MAX_COMMENT_AGE_MONTHS) || 6;
-      const cutoffDate = new Date();
-      cutoffDate.setMonth(cutoffDate.getMonth() - maxAgeMonths);
+      const posts = await getPostsWithPopulatedData();
 
-      const posts = await Post.find()
-        .populate('tags', 'id name')
-        .populate('postImages', 'url')
-        .populate({
-          path: 'comments',
-          match: { createdAt: { $gte: cutoffDate } },
-          populate: {
-            path: 'userId',
-            select: 'nickName'
-          }
-        })
-        .sort({ createdAt: -1 })
-        .lean();
+      if (posts.length === 0) {
+        return res.status(204).send();
+      }
 
       await redisClient.set(cacheKey, JSON.stringify(posts), { EX: 300 });
       res.status(200).json(posts);
     } catch (err) {
       console.error("Error en getAllPosts:", err);
-      res.status(500).json({ error: 'No se pudieron obtener los posts' });
+      res.status(500).json({ error: 'Error interno del servidor' });
     }
   },
 
@@ -71,22 +121,7 @@ module.exports = {
         return res.status(200).json(JSON.parse(cached));
       }
 
-      const maxAgeMonths = parseInt(process.env.MAX_COMMENT_AGE_MONTHS) || 6;
-      const cutoffDate = new Date();
-      cutoffDate.setMonth(cutoffDate.getMonth() - maxAgeMonths);
-
-      const post = await Post.findById(id)
-        .populate('tags', 'name')
-        .populate('postImages', 'url')
-        .populate({
-          path: 'comments',
-          match: { createdAt: { $gte: cutoffDate } },
-          populate: {
-            path: 'userId',
-            select: 'nickName'
-          }
-        })
-        .lean();
+      const post = await getPostWithPopulatedData(id);
 
       if (!post) {
         return res.status(404).json({ message: 'Post no encontrado' });
@@ -102,7 +137,7 @@ module.exports = {
 
   updatePost: async (req, res) => {
     try {
-      const { description, userId, tags } = req.body;
+      const { description, userId, tags, imagenes } = req.body;
       const post = await Post.findById(req.params.id);
 
       if (description !== undefined) post.description = description;
@@ -111,23 +146,47 @@ module.exports = {
 
       await post.save();
 
+      // Actualizar imágenes si se proporcionaron
+      if (imagenes !== undefined) {
+        // Eliminar imágenes existentes
+        await PostImage.deleteMany({ postId: post._id });
+
+        // Crear nuevas imágenes
+        if (imagenes.length > 0) {
+          const postImages = imagenes.map(url => ({
+            postId: post._id,
+            url
+          }));
+          await PostImage.insertMany(postImages);
+        }
+      }
+
+      // Obtener el post actualizado con formato unificado
+      const updatedPost = await getPostWithPopulatedData(post._id);
+
       await redisClient.del(`post:${req.params.id}`);
       await redisClient.del('posts:todos');
 
-      res.status(200).json(post);
+      res.status(201).json(updatedPost);
     } catch (err) {
+      console.error('Error en updatePost:', err);
       res.status(500).json({ error: 'No se pudo actualizar el post' });
     }
   },
 
   deletePost: async (req, res) => {
     try {
+      // El middleware ya eliminó los elementos asociados y verificó que el post existe
       await Post.findByIdAndDelete(req.params.id);
 
       await redisClient.del(`post:${req.params.id}`);
       await redisClient.del('posts:todos');
-      res.status(204).send();
+
+      res.status(200).json({
+        message: "Publicación eliminada exitosamente junto con todos sus recursos asociados"
+      });
     } catch (err) {
+      console.error('Error en deletePost:', err);
       res.status(500).json({ error: 'No se pudo eliminar el post' });
     }
   },
@@ -135,13 +194,13 @@ module.exports = {
   getPostImages: async (req, res) => {
     try {
       const { id } = req.params;
-      const post = await Post.findById(id).lean();
+      const images = await PostImage.find({ postId: id });
 
-      if (!post || !post.images) {
+      if (!images || images.length === 0) {
         return res.status(404).json({ message: 'Imágenes no encontradas' });
       }
 
-      res.status(200).json(post.images);
+      res.status(200).json(images);
     } catch (err) {
       console.error('Error en getPostImages:', err);
       res.status(500).json({ error: 'No se pudieron obtener las imágenes del post' });
@@ -151,37 +210,120 @@ module.exports = {
   addImageFromPost: async (req, res) => {
     try {
       const { id } = req.params;
-      const { url } = req.body;
+      const file = req.file;
 
-      const post = await Post.findById(id);
-      post.images.push({ url });
-      await post.save();
+      if (!file) {
+        return res.status(400).json({ error: 'Debe subir una imagen' });
+      }
+
+      const newImage = new PostImage({
+        postId: id,
+        url: `/uploads/images/${file.filename}`
+      });
+      await newImage.save();
 
       await redisClient.del(`post:${id}`);
       await redisClient.del('posts:todos');
 
-      res.status(200).json(post.images);
+      res.status(201).json(newImage);
     } catch (err) {
       console.error('Error en addImageFromPost:', err);
       res.status(500).json({ error: 'No se pudo agregar la imagen' });
     }
   },
 
-  removeImageFromPost: async (req, res) => {
+  updateImageFromPost: async (req, res) => {
     try {
       const { id, imageId } = req.params;
-      const post = await Post.findById(id);
+      const file = req.file;
 
-      post.images = post.images.filter(img => img._id.toString() !== imageId);
-      await post.save();
+      if (!file) {
+        return res.status(400).json({ error: 'Debe subir una imagen' });
+      }
+
+      const image = await PostImage.findById(imageId);
+      if (!image) {
+        return res.status(404).json({ error: 'Imagen no encontrada' });
+      }
+
+      // borrar el archivo anterior del disco
+      const fs = require('fs');
+      const path = require('path');
+      if (image.url) {
+        try {
+          fs.unlinkSync(path.join(__dirname, '../../', image.url));
+        } catch (e) { /* ignorar error si no existe */ }
+      }
+
+      image.url = `/uploads/images/${file.filename}`;
+      await image.save();
 
       await redisClient.del(`post:${id}`);
       await redisClient.del('posts:todos');
 
-      res.status(204).send();
+      res.status(200).json(image);
+    } catch (err) {
+      console.error('Error en updateImageFromPost:', err);
+      res.status(500).json({ error: 'No se pudo actualizar la imagen' });
+    }
+  },
+
+  removeImageFromPost: async (req, res) => {
+    try {
+      const { id, imageId } = req.params;
+
+      // Verificar que la imagen existe antes de eliminarla
+      const image = await PostImage.findById(imageId);
+      if (!image) {
+        return res.status(404).json({ error: 'Imagen no encontrada' });
+      }
+
+      await PostImage.findByIdAndDelete(imageId);
+
+      await redisClient.del(`post:${id}`);
+      await redisClient.del('posts:todos');
+
+      res.status(200).json({
+        message: "Imagen eliminada exitosamente"
+      });
     } catch (err) {
       console.error('Error en removeImageFromPost:', err);
-      res.status(500).json({ error: 'No se pudo eliminar la imagen' });
+      res.status(500).json({ error: 'Error al eliminar la imagen' });
+    }
+  },
+
+  updatePostImages: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { imagenes } = req.body;
+
+      const post = await Post.findById(id);
+      if (!post) {
+        return res.status(404).json({ error: 'Publicación no encontrada' });
+      }
+
+      await PostImage.deleteMany({ postId: id });
+
+      if (imagenes && imagenes.length > 0) {
+        const postImages = imagenes.map(url => ({
+          postId: id,
+          url
+        }));
+        await PostImage.insertMany(postImages);
+      }
+
+      const updatedPost = await getPostWithPopulatedData(id);
+
+      await redisClient.del(`post:${id}`);
+      await redisClient.del('posts:todos');
+
+      res.status(200).json({
+        message: "Publicación actualizada exitosamente",
+        post: updatedPost
+      });
+    } catch (err) {
+      console.error('Error en updatePostImages:', err);
+      res.status(500).json({ error: 'Error al actualizar la publicación' });
     }
   },
 
