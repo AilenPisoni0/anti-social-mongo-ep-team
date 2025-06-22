@@ -22,6 +22,14 @@ npm run seed
 npm start
 ```
 
+## Base URL
+
+La API corre por defecto en:
+
+```
+http://localhost:3000
+```
+
 ## Configuración
 
 - **Puerto del servidor**: Configurado mediante variable de entorno `PORT` (por defecto: 3000)
@@ -29,6 +37,96 @@ npm start
 - **Redis**: Configurado mediante variable de entorno `REDIS_URL` (por defecto: redis://localhost:6379)
 - **Filtrado de comentarios**: Configurado mediante variable de entorno `MAX_COMMENT_AGE_MONTHS` (por defecto: 6 meses)
 - **Entorno**: Configurado mediante variable de entorno `NODE_ENV` (por defecto: development)
+
+
+## Estructura del Proyecto
+
+```
+anti-social-mongo-ep-team/
+├── src/
+│   ├── controllers/          # Lógica de negocio
+│   │   ├── config/          # Configuración de DB y Redis
+│   │   ├── models/          # Modelos de Mongoose
+│   │   └── seeders/         # Datos de prueba
+│   ├── docs/                # Documentación Swagger
+│   ├── middlewares/         # Middlewares de validación
+│   ├── routes/              # Definición de rutas
+│   ├── schemas/             # Schemas de validación Joi
+│   └── utils/               # Utilidades
+├── postman/                 # Colecciones de prueba
+├── docker-compose.yml       # Configuración de servicios
+└── package.json
+```
+
+## Scripts Disponibles
+
+```bash
+npm start          # Iniciar servidor en producción
+npm run dev        # Iniciar servidor en desarrollo con nodemon
+npm run seed       # Ejecutar seeders para crear datos de prueba
+```
+
+## Características
+
+- Gestión de usuarios con nickName y email únicos
+- Publicaciones con imágenes y tags
+- Sistema de comentarios con filtrado por antigüedad configurable
+- Hard delete implementado con cascada apropiada
+- Documentación completa con Swagger
+- Caché con Redis para optimizar consultas
+- Validaciones robustas con Joi
+- Manejo de errores consistente
+
+## Tecnologías
+
+- **Node.js** - Runtime de JavaScript
+- **Express** - Framework web
+- **MongoDB** - Base de datos NoSQL
+- **Mongoose** - ODM para MongoDB
+- **Redis** - Caché en memoria
+- **Joi** - Validación de datos
+- **Swagger** - Documentación de API
+- **Docker** - Contenedores para servicios
+
+## Estructura de Datos
+
+### Entidades Principales
+![Yellow Social Media Marketing Fundamentals Diagram Instagram Post](https://github.com/user-attachments/assets/be139b8b-30c3-424f-95bc-95560f5154a7)
+
+#### Users
+- `nickName` único
+- `email` único
+- Hard delete con cascada
+- Timestamps automáticos
+
+#### Posts
+- `description` (requerido)
+- `userId` (referencia a User)
+- `tags` (array de referencias a Tags)
+- Relaciones pobladas automáticamente
+- Hard delete con cascada
+- Timestamps automáticos
+
+#### Comments
+- `content` (requerido)
+- `userId` (referencia a User)
+- `postId` (referencia a Post)
+- Filtrado por antigüedad configurable
+- Hard delete
+- Timestamps automáticos
+
+#### Tags
+- `name` único
+- Relación muchos a muchos con posts
+- Hard delete (solo desasocia)
+- Timestamps automáticos
+
+#### PostImages
+- `url` (requerido)
+- `postId` (referencia a Post)
+- Hard delete
+- Timestamps automáticos
+
 
 ## Endpoints
 
@@ -163,74 +261,6 @@ npm start
 
 **DELETE /tags/:id** - Eliminar un tag (solo desasocia de posts)
 
-## Base URL
-
-La API corre por defecto en:
-
-```
-http://localhost:3000
-```
-
-## Características
-
-- Gestión de usuarios con nickName y email únicos
-- Publicaciones con imágenes y tags
-- Sistema de comentarios con filtrado por antigüedad configurable
-- Hard delete implementado con cascada apropiada
-- Documentación completa con Swagger
-- Caché con Redis para optimizar consultas
-- Validaciones robustas con Joi
-- Manejo de errores consistente
-
-## Tecnologías
-
-- **Node.js** - Runtime de JavaScript
-- **Express** - Framework web
-- **MongoDB** - Base de datos NoSQL
-- **Mongoose** - ODM para MongoDB
-- **Redis** - Caché en memoria
-- **Joi** - Validación de datos
-- **Swagger** - Documentación de API
-- **Docker** - Contenedores para servicios
-
-## Estructura de Datos
-
-### Entidades Principales
-
-#### Users
-- `nickName` único
-- `email` único
-- Hard delete con cascada
-- Timestamps automáticos
-
-#### Posts
-- `description` (requerido)
-- `userId` (referencia a User)
-- `tags` (array de referencias a Tags)
-- Relaciones pobladas automáticamente
-- Hard delete con cascada
-- Timestamps automáticos
-
-#### Comments
-- `content` (requerido)
-- `userId` (referencia a User)
-- `postId` (referencia a Post)
-- Filtrado por antigüedad configurable
-- Hard delete
-- Timestamps automáticos
-
-#### Tags
-- `name` único
-- Relación muchos a muchos con posts
-- Hard delete (solo desasocia)
-- Timestamps automáticos
-
-#### PostImages
-- `url` (requerido)
-- `postId` (referencia a Post)
-- Hard delete
-- Timestamps automáticos
-
 ## Documentación de la API (Swagger)
 
 La documentación interactiva de la API está disponible a través de Swagger UI.
@@ -298,52 +328,6 @@ El sistema implementa caché con Redis para optimizar las consultas. El tiempo d
 - **Post Images:** 30 minutos (URLs estáticas)
 - **Posts:** 10 minutos (cambian moderadamente)
 - **Comments:** 2 minutos (cambian frecuentemente)
-
-### Beneficios:
-- Reducción significativa de consultas a la base de datos
-- Mejor tiempo de respuesta para lecturas frecuentes
-- Menor carga en la base de datos
-
-### Estrategia para optimizar el acceso a información de posts que no varía frecuentemente
-
-Para optimizar las consultas a posts que no varían frecuentemente, podemos implementar una estrategia de caché usando Redis.
-
-Esta implementación ofrece:
-
-- Reducción significativa de consultas a la base de datos
-- Mejor tiempo de respuesta para lecturas frecuentes
-- Menor carga en la base de datos
-
-Consideración adicional:
-
-- Configurar un TTL (Time To Live) apropiado según el caso de uso. Por ejemplo, el TTL de los comments debería ser más corto que el de la información del usuario, ya que los comentarios cambian mucho más seguido.
-
-## Estructura del Proyecto
-
-```
-anti-social-mongo-ep-team/
-├── src/
-│   ├── controllers/          # Lógica de negocio
-│   │   ├── config/          # Configuración de DB y Redis
-│   │   ├── models/          # Modelos de Mongoose
-│   │   └── seeders/         # Datos de prueba
-│   ├── docs/                # Documentación Swagger
-│   ├── middlewares/         # Middlewares de validación
-│   ├── routes/              # Definición de rutas
-│   ├── schemas/             # Schemas de validación Joi
-│   └── utils/               # Utilidades
-├── postman/                 # Colecciones de prueba
-├── docker-compose.yml       # Configuración de servicios
-└── package.json
-```
-
-## Scripts Disponibles
-
-```bash
-npm start          # Iniciar servidor en producción
-npm run dev        # Iniciar servidor en desarrollo con nodemon
-npm run seed       # Ejecutar seeders para crear datos de prueba
-```
 
 ## Bonus
 
