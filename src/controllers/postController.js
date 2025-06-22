@@ -12,7 +12,7 @@ const getPostWithPopulatedData = async (postId) => {
   const cutoffDate = new Date();
   cutoffDate.setMonth(cutoffDate.getMonth() - maxAgeMonths);
 
-  const post = await Post.findById(postId).lean();
+  const post = await Post.findById(postId);
 
   if (!post) {
     return null;
@@ -21,13 +21,13 @@ const getPostWithPopulatedData = async (postId) => {
   const comments = await Comment.find({
     postId: postId,
     createdAt: { $gte: cutoffDate }
-  }).lean();
+  });
 
-  const tags = await Tag.find({ _id: { $in: post.tags } }).select('name').lean();
-  const postImages = await PostImage.find({ postId: postId }).select('url').lean();
+  const tags = await Tag.find({ _id: { $in: post.tags } }).select('name');
+  const postImages = await PostImage.find({ postId: postId }).select('url');
 
   const result = {
-    ...post,
+    ...post.toObject(),
     tags: tags,
     postImages: postImages,
     comments: comments
