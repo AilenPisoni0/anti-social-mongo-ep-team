@@ -2,7 +2,7 @@
 
 API REST para una red social antisocial. Desarrollada con Node.js, Express y MongoDB.
 
-## 🚀 Instalación y Configuración
+## Instalación y Configuración
 
 ### Prerrequisitos
 - Node.js (versión 14 o superior)
@@ -57,7 +57,7 @@ Una API REST completa para una red social que permite:
 - **Validaciones robustas** con Joi
 - **Documentación completa** con Swagger
 
-## 🏗️ Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 anti-social-mongo-ep-team/
@@ -77,7 +77,7 @@ anti-social-mongo-ep-team/
 └── package.json
 ```
 
-## 🗄️ Modelo de Datos
+## Modelo de Datos
 
 ### Entidades Principales
 
@@ -115,7 +115,7 @@ anti-social-mongo-ep-team/
 - Hard delete
 - Timestamps automáticos
 
-## 🔗 Endpoints de la API
+## Endpoints de la API
 
 ### Base URL
 ```
@@ -278,7 +278,7 @@ La documentación interactiva de la API está disponible a través de Swagger UI
 - Validaciones y patrones especificados
 - Interfaz interactiva para probar endpoints
 
-## 🧪 Colecciones de Prueba (Postman)
+## Colecciones de Prueba (Postman)
 
 El proyecto incluye colecciones de Postman para facilitar las pruebas:
 
@@ -299,7 +299,7 @@ El proyecto incluye colecciones de Postman para facilitar las pruebas:
 
 3. **Obtener IDs reales** de las respuestas de la API y actualizar las variables del environment
 
-## ⚡ Optimización con Redis
+## Optimización con Redis
 
 El sistema implementa caché con Redis para optimizar las consultas. El tiempo de vida (TTL) de la caché depende del tipo de dato:
 
@@ -321,7 +321,7 @@ El sistema implementa caché con Redis para optimizar las consultas. El tiempo d
 - **Manejo de errores** consistente
 - **Variables de entorno** configurables
 
-## 🛠️ Tecnologías Utilizadas
+## Tecnologías Utilizadas
 
 - **Node.js** - Runtime de JavaScript
 - **Express** - Framework web
@@ -332,7 +332,7 @@ El sistema implementa caché con Redis para optimizar las consultas. El tiempo d
 - **Swagger** - Documentación de API
 - **Docker** - Contenedores para servicios
 
-## 🎯 Bonus: Funcionalidades Adicionales
+## Bonus: Funcionalidades Adicionales
 
 ### ¿Cómo modelar que un usuario pueda "seguir" a otros usuarios y ser seguido por muchos? (Followers)
 

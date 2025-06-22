@@ -242,23 +242,6 @@ const removeTagFromPost = async (req, res) => {
   }
 };
 
-// Función temporal para limpiar cache manualmente
-const clearPostCacheManually = async (req, res) => {
-  try {
-    const postId = req.params.id;
-    const success = await clearPostCache(postId);
-
-    if (success) {
-      res.status(200).json({ message: 'Cache limpiado exitosamente' });
-    } else {
-      res.status(500).json({ error: 'Error al limpiar cache' });
-    }
-  } catch (error) {
-    console.error('Error al limpiar cache manualmente:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
-  }
-};
-
 module.exports = {
   getAllPosts,
   getPostById,
@@ -267,6 +250,5 @@ module.exports = {
   deletePost,
   getPostTags,
   addTagToPost,
-  removeTagFromPost,
-  clearPostCacheManually
+  removeTagFromPost
 };

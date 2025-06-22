@@ -18,9 +18,6 @@ router.post('/',
 
 router.get('/:id', postController.getPostById);
 
-// Ruta temporal para limpiar cache manualmente (debe ir antes de rutas más específicas)
-router.delete('/:id/cache', postController.clearPostCacheManually);
-
 router.put('/:id',
     genericMiddleware.validateMongoId,
     genericMiddleware.createEntityExistsValidator(Post, 'Post'),
