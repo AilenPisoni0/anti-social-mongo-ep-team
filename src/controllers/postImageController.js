@@ -1,13 +1,12 @@
 const PostImage = require('../db/models/postImage');
-const Post = require('../db/models/post');
-const { redisClient } = require('../db/config/redisClient');
+const { invalidatePostCache, invalidatePostsListCache } = require('../utils/cacheUtils');
 
-// Helper para invalidar cachés relacionados con posts
-const invalidatePostCaches = async (postId = null) => {
-    if (postId) {
-        await redisClient.del(`post:${postId}`);
-    }
-    await redisClient.del('posts:todos');
+// Helper para invalidar caché de post relacionado
+const invalidateRelatedPostCache = async (postId) => {
+    await Promise.all([
+        invalidatePostCache(postId),
+        invalidatePostsListCache()
+    ]);
 };
 
 module.exports = {
@@ -41,7 +40,7 @@ module.exports = {
             });
 
             await newPostImage.save();
-            await invalidatePostCaches(postId);
+            await invalidateRelatedPostCache(postId);
 
             res.status(201).json({
                 message: "Imagen del post creada exitosamente",
@@ -53,23 +52,17 @@ module.exports = {
         }
     },
 
-    // DELETE - Eliminar una imagen específica de un post
+    // DELETE - Eliminar imagen de post
     deletePostImage: async (req, res) => {
         try {
-            const { id: postId, imageId } = req.params;
-
-            const image = await PostImage.findOne({ _id: imageId, postId });
-            if (!image) {
-                return res.status(404).json({ error: 'Imagen no encontrada en este post' });
-            }
-
-            await PostImage.findByIdAndDelete(imageId);
-            await invalidatePostCaches(postId);
-
-            res.status(204).send();
-        } catch (err) {
-            console.error(err);
-            res.status(500).json({ error: 'No se pudo eliminar la imagen' });
+            // El middleware ya eliminó la imagen e invalidó las cachés
+            res.status(200).json({
+                message: 'Imagen eliminada exitosamente',
+                image: req.deletedPostImage
+            });
+        } catch (error) {
+            console.error('Error al eliminar imagen:', error);
+            res.status(500).json({ error: 'Error interno del servidor' });
         }
     }
 }; 

@@ -1,6 +1,7 @@
 const Comment = require('../db/models/comment');
 const User = require('../db/models/user');
 const { redisClient, CACHE_TTL } = require('../db/config/redisClient');
+const { invalidatePostCommentsCache } = require('../utils/cacheUtils');
 
 // Helper para invalidar cachés relacionados con comentarios
 const invalidateCommentCaches = async (commentId = null, postId = null) => {
@@ -8,9 +9,11 @@ const invalidateCommentCaches = async (commentId = null, postId = null) => {
     await redisClient.del(`comment:${commentId}`);
   }
   if (postId) {
-    await redisClient.del(`comments:post:${postId}`);
+    await invalidatePostCommentsCache(postId);
+    await redisClient.del(`post:${postId}`);
   }
   await redisClient.del('comments:todos');
+  await redisClient.del('posts:todos');
 };
 
 module.exports = {
@@ -44,7 +47,6 @@ module.exports = {
 
       const cached = await redisClient.get(cacheKey);
       if (cached) {
-        console.log('Comentarios del post desde Redis');
         const comments = JSON.parse(cached);
         return comments.length === 0 ? res.status(204).send() : res.status(200).json(comments);
       }
@@ -77,7 +79,6 @@ module.exports = {
     try {
       const cached = await redisClient.get(cacheKey);
       if (cached) {
-        console.log('Todos los comentarios desde Redis');
         const comments = JSON.parse(cached);
         return comments.length === 0 ? res.status(204).send() : res.status(200).json(comments);
       }
@@ -104,7 +105,6 @@ module.exports = {
     try {
       const cached = await redisClient.get(cacheKey);
       if (cached) {
-        console.log('Comentario desde Redis');
         return res.status(200).json(JSON.parse(cached));
       }
 
@@ -159,22 +159,14 @@ module.exports = {
   // Eliminar un comentario
   deleteComment: async (req, res) => {
     try {
-      const { id } = req.params;
-
-      const comment = await Comment.findById(id);
-      if (!comment) {
-        return res.status(404).json({ error: 'Comentario no encontrado' });
-      }
-
-      const postId = comment.postId;
-      await comment.deleteOne();
-
-      await invalidateCommentCaches(id, postId);
-
-      res.status(204).send();
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'No se pudo eliminar el comentario' });
+      // El middleware ya eliminó el comentario e invalidó las cachés
+      res.status(200).json({
+        message: 'Comentario eliminado exitosamente',
+        comment: req.deletedComment
+      });
+    } catch (error) {
+      console.error('Error al eliminar comentario:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
     }
   }
 };

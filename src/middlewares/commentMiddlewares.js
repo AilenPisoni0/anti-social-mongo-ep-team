@@ -32,6 +32,39 @@ const validateUpdateFields = () => {
    }
 }
 
+const Comment = require('../db/models/comment');
+const { invalidatePostCache, invalidateCommentsCache, invalidatePostCommentsCache, invalidatePostsListCache } = require('../utils/cacheUtils');
+
+// Middleware para eliminar comentario con invalidación de caché
+const deleteCommentWithCache = async (req, res, next) => {
+   try {
+      const commentId = req.params.id;
+
+      const comment = await Comment.findById(commentId);
+      if (!comment) {
+         return res.status(404).json({ error: 'Comentario no encontrado' });
+      }
+
+      const postId = comment.postId.toString();
+
+      await Comment.findByIdAndDelete(commentId);
+
+      await Promise.all([
+         invalidatePostCache(postId),
+         invalidateCommentsCache(),
+         invalidatePostCommentsCache(postId),
+         invalidatePostsListCache()
+      ]);
+
+      req.deletedComment = comment;
+      next();
+   } catch (error) {
+      console.error('Error en eliminación del comentario:', error);
+      return res.status(500).json({ error: 'Error al eliminar el comentario' });
+   }
+};
+
 module.exports = {
    validateUpdateFields,
+   deleteCommentWithCache
 };

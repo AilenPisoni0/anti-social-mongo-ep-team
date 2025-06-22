@@ -1,7 +1,7 @@
 const Joi = require("joi");
 
 const UserSchema = Joi.object({
-    nickName: Joi.string().required().min(4).max(12).pattern(/^[a-zA-Z0-9_]+$/).messages({
+    nickName: Joi.string().required().min(4).max(30).pattern(/^[a-zA-Z0-9_]+$/).messages({
         "any.required": "El nickName es obligatorio",
         "string.min": "El nickName debe tener como mínimo {#limit} caracteres",
         "string.max": "El nickName debe tener como máximo {#limit} caracteres",
@@ -20,7 +20,7 @@ const UserSchema = Joi.object({
 const UpdateUserSchema = Joi.object({
     nickName: Joi.string()
         .min(4)
-        .max(12)
+        .max(30)
         .pattern(/^[a-zA-Z0-9_]+$/)
         .messages({
             "string.min": "El nickName debe tener como mínimo {#limit} caracteres",
