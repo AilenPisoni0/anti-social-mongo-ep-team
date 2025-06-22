@@ -9,7 +9,6 @@ const invalidateUserCaches = async (userId = null) => {
     await redisClient.del(`user:${userId}`);
   }
   await redisClient.del('users:todos');
-  await redisClient.del('posts:todos');
 };
 
 module.exports = {
@@ -45,7 +44,6 @@ module.exports = {
     try {
       const cached = await redisClient.get(cacheKey);
       if (cached) {
-        console.log('Respuesta desde Redis');
         const users = JSON.parse(cached);
         return users.length === 0 ? res.status(204).send() : res.status(200).json(users);
       }
@@ -71,7 +69,6 @@ module.exports = {
     try {
       const cached = await redisClient.get(cacheKey);
       if (cached) {
-        console.log('Usuario desde Redis');
         return res.status(200).json(JSON.parse(cached));
       }
 
@@ -116,23 +113,31 @@ module.exports = {
     }
   },
 
-  // Eliminar un usuario con efecto cascada
+  // Eliminar un usuario
   deleteUser: async (req, res) => {
     try {
-      const { id } = req.params;
+      const userId = req.params.id;
 
-      // El middleware ya eliminó los elementos asociados y verificó que el usuario existe
-      await User.findByIdAndDelete(id);
+      const deletedUser = await User.findByIdAndDelete(userId);
 
-      await invalidateUserCaches(id);
+      if (!deletedUser) {
+        return res.status(404).json({ error: 'Usuario no encontrado' });
+      }
 
-      res.status(204).send();
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'No se pudo eliminar el usuario' });
+      // Invalidar caché específica del usuario
+      await invalidateUserCaches(userId);
+
+      res.status(200).json({
+        message: 'Usuario eliminado exitosamente',
+        user: deletedUser
+      });
+    } catch (error) {
+      console.error('Error al eliminar usuario:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
     }
   }
 };
+
 
 
 

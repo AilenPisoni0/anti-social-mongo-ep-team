@@ -1,6 +1,7 @@
 // src/middlewares/postImageMiddlewares.js
 const PostImage = require('../db/models/postImage');
 const { handleMongoError } = require('../utils/validation');
+const { invalidatePostCache, invalidatePostsListCache } = require('../utils/cacheUtils');
 
 /**
  * Middleware para verificar que una imagen existe en un post específico
@@ -29,6 +30,37 @@ const existImageInPost = () => {
   };
 };
 
+// Middleware para eliminar imagen de post con invalidación de caché
+const deletePostImageWithCache = async (req, res, next) => {
+  try {
+    const imageId = req.params.imageId;
+
+    const postImage = await PostImage.findById(imageId);
+    if (!postImage) {
+      return res.status(404).json({ error: 'Imagen no encontrada' });
+    }
+
+    // Guardar el postId antes de eliminar la imagen
+    const postId = postImage.postId.toString();
+
+    // Eliminar la imagen
+    await PostImage.findByIdAndDelete(imageId);
+
+    // Invalidar cachés del post individual y la lista completa
+    await Promise.all([
+      invalidatePostCache(postId),
+      invalidatePostsListCache()
+    ]);
+
+    req.deletedPostImage = postImage;
+    next();
+  } catch (error) {
+    console.error('Error en eliminación de la imagen:', error);
+    return res.status(500).json({ error: 'Error al eliminar la imagen' });
+  }
+};
+
 module.exports = {
-  existImageInPost
+  existImageInPost,
+  deletePostImageWithCache
 };

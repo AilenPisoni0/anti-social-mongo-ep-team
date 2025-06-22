@@ -46,7 +46,7 @@ router.put('/:id',
 // Eliminar comentario
 router.delete('/:id',
   genericMiddleware.validateMongoId,
-  genericMiddleware.createEntityExistsValidator(Comment, 'Comentario'),
+  commentMiddleware.deleteCommentWithCache,
   commentController.deleteComment
 );
 

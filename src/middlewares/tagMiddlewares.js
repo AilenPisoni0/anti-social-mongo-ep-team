@@ -3,6 +3,7 @@ const Tag = require("../db/models/tag");
 const Post = require("../db/models/post");
 const { validateEntityExists, validateUniqueAttribute } = require('../utils/entityValidation');
 const { handleMongoError } = require('../utils/validation');
+const { invalidatePostCache, invalidatePostsListCache, invalidateCommentsCache } = require('../utils/cacheUtils');
 
 /**
  * Middleware para verificar que un tag existe por ID
@@ -60,8 +61,84 @@ const existTagInPost = () => {
   };
 };
 
+// Middleware para eliminar tag con invalidación de caché
+const deleteTagWithCache = async (req, res, next) => {
+  try {
+    const tagId = req.params.id;
+
+    const tag = await Tag.findById(tagId);
+    if (!tag) {
+      return res.status(404).json({ error: 'Tag no encontrado' });
+    }
+
+    // Buscar posts que usan este tag
+    const postsWithTag = await Post.find({ tags: tagId });
+    const postIds = postsWithTag.map(post => post._id.toString());
+
+    // Eliminar el tag
+    await Tag.findByIdAndDelete(tagId);
+
+    // Remover el tag de todos los posts que lo usan
+    await Post.updateMany(
+      { tags: tagId },
+      { $pull: { tags: tagId } }
+    );
+
+    // Invalidar cachés de posts que usaban este tag
+    for (const postId of postIds) {
+      await invalidatePostCache(postId);
+    }
+    await Promise.all([
+      invalidatePostsListCache(),
+      invalidateCommentsCache()
+    ]);
+
+    req.deletedTag = tag;
+    next();
+  } catch (error) {
+    console.error('Error en eliminación del tag:', error);
+    return res.status(500).json({ error: 'Error al eliminar el tag' });
+  }
+};
+
+// Middleware para actualizar tag con invalidación de caché
+const updateTagWithCache = async (req, res, next) => {
+  try {
+    const tagId = req.params.id;
+
+    const tag = await Tag.findById(tagId);
+    if (!tag) {
+      return res.status(404).json({ error: 'Tag no encontrado' });
+    }
+
+    // Buscar posts que usan este tag
+    const postsWithTag = await Post.find({ tags: tagId });
+    const postIds = postsWithTag.map(post => post._id.toString());
+
+    // Actualizar el tag
+    const updatedTag = await Tag.findByIdAndUpdate(tagId, req.body, { new: true });
+
+    // Invalidar cachés de posts que usan este tag
+    for (const postId of postIds) {
+      await invalidatePostCache(postId);
+    }
+    await Promise.all([
+      invalidatePostsListCache(),
+      invalidateCommentsCache()
+    ]);
+
+    req.updatedTag = updatedTag;
+    next();
+  } catch (error) {
+    console.error('Error en actualización del tag:', error);
+    return res.status(500).json({ error: 'Error al actualizar el tag' });
+  }
+};
+
 module.exports = {
   existTagByName,
   existTagInPost,
-  existTagModelById
+  existTagModelById,
+  deleteTagWithCache,
+  updateTagWithCache
 };

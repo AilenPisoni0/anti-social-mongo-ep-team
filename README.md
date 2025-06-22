@@ -2,35 +2,34 @@
 
 API REST para una red social antisocial. Desarrollada con Node.js, Express y MongoDB.
 
-## Instalación
+## Instalación y Configuración
+
+### Prerrequisitos
+- Node.js (versión 14 o superior)
+- Docker y Docker Compose
+- Git
+
+### Pasos de instalación
 
 ```bash
-# Clonar repositorio
+# 1. Clonar repositorio
 git clone <repository-url>
 cd anti-social-mongo-ep-team
 
-# Instalar dependencias
+# 2. Instalar dependencias
 npm install
 
-# Iniciar servicios con Docker
+# 3. Iniciar servicios con Docker
 docker-compose up -d
 
-# Ejecutar seeders para datos de prueba
+# 4. Ejecutar seeders para datos de prueba
 npm run seed
 
-# Iniciar servidor
+# 5. Iniciar servidor
 npm start
 ```
 
-## Base URL
-
-La API corre por defecto en:
-
-```
-http://localhost:3000
-```
-
-## Configuración
+### Configuración del entorno
 
 - **Puerto del servidor**: Configurado mediante variable de entorno `PORT` (por defecto: 3000)
 - **Base de datos MongoDB**: Configurada mediante variable de entorno `MONGO_URI`
@@ -38,6 +37,25 @@ http://localhost:3000
 - **Filtrado de comentarios**: Configurado mediante variable de entorno `MAX_COMMENT_AGE_MONTHS` (por defecto: 6 meses)
 - **Entorno**: Configurado mediante variable de entorno `NODE_ENV` (por defecto: development)
 
+### Scripts disponibles
+
+```bash
+npm start          # Iniciar servidor en producción
+npm run dev        # Iniciar servidor en desarrollo con nodemon
+npm run seed       # Ejecutar seeders para crear datos de prueba
+```
+
+## 📋 ¿Qué es esta API?
+
+Una API REST completa para una red social que permite:
+
+- **Gestión de usuarios** con nickName y email únicos
+- **Publicaciones** con imágenes y tags
+- **Sistema de comentarios** con filtrado por antigüedad configurable
+- **Hard delete** implementado con cascada apropiada
+- **Caché con Redis** para optimizar consultas
+- **Validaciones robustas** con Joi
+- **Documentación completa** con Swagger
 
 ## Estructura del Proyecto
 
@@ -45,6 +63,7 @@ http://localhost:3000
 anti-social-mongo-ep-team/
 ├── src/
 │   ├── controllers/          # Lógica de negocio
+│   ├── db/
 │   │   ├── config/          # Configuración de DB y Redis
 │   │   ├── models/          # Modelos de Mongoose
 │   │   └── seeders/         # Datos de prueba
@@ -58,40 +77,9 @@ anti-social-mongo-ep-team/
 └── package.json
 ```
 
-## Scripts Disponibles
-
-```bash
-npm start          # Iniciar servidor en producción
-npm run dev        # Iniciar servidor en desarrollo con nodemon
-npm run seed       # Ejecutar seeders para crear datos de prueba
-```
-
-## Características
-
-- Gestión de usuarios con nickName y email únicos
-- Publicaciones con imágenes y tags
-- Sistema de comentarios con filtrado por antigüedad configurable
-- Hard delete implementado con cascada apropiada
-- Documentación completa con Swagger
-- Caché con Redis para optimizar consultas
-- Validaciones robustas con Joi
-- Manejo de errores consistente
-
-## Tecnologías
-
-- **Node.js** - Runtime de JavaScript
-- **Express** - Framework web
-- **MongoDB** - Base de datos NoSQL
-- **Mongoose** - ODM para MongoDB
-- **Redis** - Caché en memoria
-- **Joi** - Validación de datos
-- **Swagger** - Documentación de API
-- **Docker** - Contenedores para servicios
-
-## Estructura de Datos
+## Modelo de Datos
 
 ### Entidades Principales
-![Yellow Social Media Marketing Fundamentals Diagram Instagram Post](https://github.com/user-attachments/assets/be139b8b-30c3-424f-95bc-95560f5154a7)
 
 #### Users
 - `nickName` único
@@ -127,8 +115,12 @@ npm run seed       # Ejecutar seeders para crear datos de prueba
 - Hard delete
 - Timestamps automáticos
 
+## Endpoints de la API
 
-## Endpoints
+### Base URL
+```
+http://localhost:3000
+```
 
 ### Users
 
@@ -261,7 +253,7 @@ npm run seed       # Ejecutar seeders para crear datos de prueba
 
 **DELETE /tags/:id** - Eliminar un tag (solo desasocia de posts)
 
-## Documentación de la API (Swagger)
+## 📚 Documentación Interactiva (Swagger)
 
 La documentación interactiva de la API está disponible a través de Swagger UI.
 
@@ -286,18 +278,7 @@ La documentación interactiva de la API está disponible a través de Swagger UI
 - Validaciones y patrones especificados
 - Interfaz interactiva para probar endpoints
 
-## Características de Implementación
-
-- **Hard delete** con cascada apropiada
-- **Validaciones** con Joi schemas
-- **Middlewares** genéricos para validaciones comunes
-- **Filtrado automático** de comentarios antiguos
-- **Caché con Redis** para optimizar consultas
-- **Relaciones pobladas** automáticamente en posts
-- **Manejo de errores** consistente
-- **Variables de entorno** configurables
-
-## Colecciones de Prueba
+## Colecciones de Prueba (Postman)
 
 El proyecto incluye colecciones de Postman para facilitar las pruebas:
 
@@ -329,7 +310,29 @@ El sistema implementa caché con Redis para optimizar las consultas. El tiempo d
 - **Posts:** 10 minutos (cambian moderadamente)
 - **Comments:** 2 minutos (cambian frecuentemente)
 
-## Bonus
+### Características de implementación:
+
+- **Hard delete** con cascada apropiada
+- **Validaciones** con Joi schemas
+- **Middlewares** genéricos para validaciones comunes
+- **Filtrado automático** de comentarios antiguos
+- **Caché con Redis** para optimizar consultas
+- **Relaciones pobladas** automáticamente en posts
+- **Manejo de errores** consistente
+- **Variables de entorno** configurables
+
+## Tecnologías Utilizadas
+
+- **Node.js** - Runtime de JavaScript
+- **Express** - Framework web
+- **MongoDB** - Base de datos NoSQL
+- **Mongoose** - ODM para MongoDB
+- **Redis** - Caché en memoria
+- **Joi** - Validación de datos
+- **Swagger** - Documentación de API
+- **Docker** - Contenedores para servicios
+
+## Bonus: Funcionalidades Adicionales
 
 ### ¿Cómo modelar que un usuario pueda "seguir" a otros usuarios y ser seguido por muchos? (Followers)
 
@@ -354,7 +357,7 @@ Esto permite:
 - Implementar endpoints como `/users/:id/followers` y `/users/:id/following`.
 - Agregar o sacar seguidores de manera eficiente usando operadores de MongoDB (`$addToSet`, `$pull`).
 
-### Como la información de los post no varía muy seguido ¿Qué estrategias podrían utilizar para que la información no sea constantemente consultada desde la base de datos?
+### ¿Qué estrategias podrían utilizar para que la información de los posts no sea constantemente consultada desde la base de datos?
 
 Para optimizar las consultas a posts que no varían frecuentemente, podemos implementar una estrategia de caché usando Redis.
 

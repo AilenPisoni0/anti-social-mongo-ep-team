@@ -3,7 +3,7 @@ const router = express.Router();
 const postController = require('../controllers/postController');
 const commentController = require('../controllers/commentController');
 const postImageController = require('../controllers/postImageController');
-const { genericMiddleware, postMiddleware, userMiddleware } = require("../middlewares");
+const { genericMiddleware, postMiddleware, userMiddleware, postImageMiddleware } = require("../middlewares");
 const { createPostSchema, updatePostSchema, createPostImageSchema } = require("../schemas");
 const Post = require("../db/models/post");
 const User = require("../db/models/user");
@@ -50,6 +50,7 @@ router.post('/:id/images',
 router.delete('/:id/images/:imageId',
     genericMiddleware.validateMongoId,
     genericMiddleware.createEntityExistsValidator(Post, 'Post'),
+    postImageMiddleware.deletePostImageWithCache,
     postImageController.deletePostImage
 );
 

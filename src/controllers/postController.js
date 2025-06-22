@@ -5,35 +5,37 @@ const Tag = require('../db/models/tag');
 const Comment = require('../db/models/comment');
 const User = require('../db/models/user');
 const { redisClient, CACHE_TTL } = require('../db/config/redisClient');
+const { clearPostCache, invalidatePostCache, invalidatePostsListCache } = require('../utils/cacheUtils');
 
-// Helper para invalidar cachés relacionados con posts
-const invalidatePostCaches = async (postId = null) => {
-  if (postId) {
-    await redisClient.del(`post:${postId}`);
-  }
-  await redisClient.del('posts:todos');
-};
-
-// Helper para obtener posts con formato unificado
 const getPostWithPopulatedData = async (postId) => {
   const maxAgeMonths = parseInt(process.env.MAX_COMMENT_AGE_MONTHS) || 6;
   const cutoffDate = new Date();
   cutoffDate.setMonth(cutoffDate.getMonth() - maxAgeMonths);
 
-  return await Post.findById(postId)
-    .populate('tags', 'name')
-    .populate('postImages', 'url')
-    .populate({
-      path: 'comments',
-      match: { createdAt: { $gte: cutoffDate } },
-      populate: {
-        path: 'userId',
-        select: 'nickName'
-      }
-    });
+  const post = await Post.findById(postId);
+
+  if (!post) {
+    return null;
+  }
+
+  const comments = await Comment.find({
+    postId: postId,
+    createdAt: { $gte: cutoffDate }
+  });
+
+  const tags = await Tag.find({ _id: { $in: post.tags } }).select('name');
+  const postImages = await PostImage.find({ postId: postId }).select('url');
+
+  const result = {
+    ...post.toObject(),
+    tags: tags,
+    postImages: postImages,
+    comments: comments
+  };
+
+  return result;
 };
 
-// Helper para obtener múltiples posts con formato unificado
 const getPostsWithPopulatedData = async () => {
   const maxAgeMonths = parseInt(process.env.MAX_COMMENT_AGE_MONTHS) || 6;
   const cutoffDate = new Date();
@@ -44,223 +46,209 @@ const getPostsWithPopulatedData = async () => {
     .populate('postImages', 'url')
     .populate({
       path: 'comments',
-      match: { createdAt: { $gte: cutoffDate } },
-      populate: {
-        path: 'userId',
-        select: 'nickName'
-      }
+      match: { createdAt: { $gte: cutoffDate } }
     })
     .sort({ createdAt: -1 });
 };
 
-module.exports = {
-  createPost: async (req, res) => {
-    try {
-      const { description, userId, tags, imagenes } = req.body;
-
-      const newPost = new Post({
-        description,
-        userId,
-        tags: tags || []
-      });
-
-      await newPost.save();
-
-      if (imagenes && imagenes.length > 0) {
-        const postImages = imagenes.map(url => ({
-          postId: newPost._id,
-          url
-        }));
-
-        await PostImage.insertMany(postImages);
-      }
-
-      const postWithData = await getPostWithPopulatedData(newPost._id);
-
-      await invalidatePostCaches();
-
-      res.status(201).json(postWithData);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'No se pudo crear el post' });
-    }
-  },
-
-  getAllPosts: async (req, res) => {
+const getAllPosts = async (req, res) => {
+  try {
     const cacheKey = 'posts:todos';
-    try {
-      const cached = await redisClient.get(cacheKey);
-      if (cached) {
-        console.log('Posts desde Redis');
-        const posts = JSON.parse(cached);
-        return posts.length === 0 ? res.status(204).send() : res.status(200).json(posts);
-      }
 
-      const posts = await getPostsWithPopulatedData();
-
-      if (posts.length === 0) {
-        return res.status(204).send();
-      }
-
-      await redisClient.set(cacheKey, JSON.stringify(posts), { EX: CACHE_TTL.POSTS });
-      res.status(200).json(posts);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'No se pudieron obtener los posts' });
+    const cached = await redisClient.get(cacheKey);
+    if (cached) {
+      return res.status(200).json(JSON.parse(cached));
     }
-  },
 
-  getPostById: async (req, res) => {
-    const { id } = req.params;
-    const cacheKey = `post:${id}`;
-    try {
-      const cached = await redisClient.get(cacheKey);
-      if (cached) {
-        console.log('Post desde Redis');
-        return res.status(200).json(JSON.parse(cached));
-      }
+    const posts = await getPostsWithPopulatedData();
 
-      const post = await getPostWithPopulatedData(id);
-
-      if (!post) {
-        return res.status(404).json({ error: 'Post no encontrado' });
-      }
-
-      await redisClient.set(cacheKey, JSON.stringify(post), { EX: CACHE_TTL.POSTS });
-      res.status(200).json(post);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'No se pudo obtener el post' });
-    }
-  },
-
-  updatePost: async (req, res) => {
-    try {
-      const { description, userId, tags, imagenes } = req.body;
-      const post = await Post.findById(req.params.id);
-
-      if (description !== undefined) post.description = description;
-      if (userId !== undefined) post.userId = userId;
-      if (tags !== undefined) post.tags = tags;
-
-      await post.save();
-
-      if (imagenes !== undefined) {
-        await PostImage.deleteMany({ postId: post._id });
-
-        if (imagenes.length > 0) {
-          const postImages = imagenes.map(url => ({
-            postId: post._id,
-            url
-          }));
-          await PostImage.insertMany(postImages);
-        }
-      }
-
-      const updatedPost = await getPostWithPopulatedData(post._id);
-
-      await invalidatePostCaches(req.params.id);
-
-      res.status(200).json(updatedPost);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'No se pudo actualizar el post' });
-    }
-  },
-
-  deletePost: async (req, res) => {
-    try {
-      await Post.findByIdAndDelete(req.params.id);
-
-      await invalidatePostCaches(req.params.id);
-
-      res.status(204).send();
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'No se pudo eliminar el post' });
-    }
-  },
-
-  addTagToPost: async (req, res) => {
-    try {
-      const { id: postId, tagId } = req.params;
-
-      const tag = await Tag.findById(tagId);
-      if (!tag) {
-        return res.status(404).json({ error: 'Tag no encontrado' });
-      }
-
-      const post = await Post.findById(postId);
-      if (post.tags.includes(tagId)) {
-        return res.status(400).json({ error: 'El post ya tiene este tag asociado' });
-      }
-
-      post.tags.push(tagId);
-      await post.save();
-
-      const updatedPost = await getPostWithPopulatedData(postId);
-
-      await invalidatePostCaches(postId);
-
-      res.status(200).json({
-        message: "Tag agregado al post exitosamente",
-        post: updatedPost
-      });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'No se pudo agregar el tag al post' });
-    }
-  },
-
-  removeTagFromPost: async (req, res) => {
-    try {
-      const { id: postId, tagId } = req.params;
-
-      const tag = await Tag.findById(tagId);
-      if (!tag) {
-        return res.status(404).json({ error: 'Tag no encontrado' });
-      }
-
-      const post = await Post.findById(postId);
-      if (!post.tags.includes(tagId)) {
-        return res.status(400).json({ error: 'El post no tiene este tag asociado' });
-      }
-
-      post.tags = post.tags.filter(id => id.toString() !== tagId);
-      await post.save();
-
-      const updatedPost = await getPostWithPopulatedData(postId);
-
-      await invalidatePostCaches(postId);
-
-      res.status(200).json({
-        message: "Tag removido del post exitosamente",
-        post: updatedPost
-      });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'No se pudo remover el tag del post' });
-    }
-  },
-
-  getPostTags: async (req, res) => {
-    try {
-      const { id: postId } = req.params;
-
-      const post = await Post.findById(postId).populate('tags', 'name');
-
-      if (!post) {
-        return res.status(404).json({ error: 'Post no encontrado' });
-      }
-
-      if (!post.tags || post.tags.length === 0) {
-        return res.status(204).send();
-      }
-
-      res.status(200).json(post.tags);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'No se pudieron obtener los tags del post' });
-    }
+    await redisClient.set(cacheKey, JSON.stringify(posts), { EX: CACHE_TTL.POSTS });
+    res.status(200).json(posts);
+  } catch (error) {
+    console.error('Error al obtener posts:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
+};
+
+//GET - Obtener post por ID
+const getPostById = async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const cacheKey = `post:${postId}`;
+
+    const cached = await redisClient.get(cacheKey);
+    if (cached) {
+      return res.status(200).json(JSON.parse(cached));
+    }
+
+    const post = await getPostWithPopulatedData(postId);
+
+    if (!post) {
+      return res.status(404).json({ error: 'Post no encontrado' });
+    }
+
+    await redisClient.set(cacheKey, JSON.stringify(post), { EX: CACHE_TTL.POSTS });
+    res.status(200).json(post);
+  } catch (error) {
+    console.error('Error al obtener post:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+//POST - Crear post
+const createPost = async (req, res) => {
+  try {
+    const post = new Post(req.body);
+    await post.save();
+
+    // Invalidar caché de lista de posts
+    await invalidatePostsListCache();
+
+    const populatedPost = await getPostWithPopulatedData(post._id);
+
+    res.status(201).json(populatedPost);
+  } catch (error) {
+    console.error('Error al crear post:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+//PUT - Actualizar post
+const updatePost = async (req, res) => {
+  try {
+    const postId = req.params.id;
+
+    const updatedPost = await Post.findByIdAndUpdate(
+      postId,
+      req.body,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedPost) {
+      return res.status(404).json({ error: 'Post no encontrado' });
+    }
+
+    // Invalidar cachés
+    await Promise.all([
+      invalidatePostCache(postId),
+      invalidatePostsListCache()
+    ]);
+
+    const populatedPost = await getPostWithPopulatedData(updatedPost._id);
+
+    res.status(200).json(populatedPost);
+  } catch (error) {
+    console.error('Error al actualizar post:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+//DELETE - Eliminar post
+const deletePost = async (req, res) => {
+  try {
+    res.status(200).json({
+      message: 'Post eliminado exitosamente',
+      post: req.postToDelete
+    });
+  } catch (error) {
+    console.error('Error al eliminar post:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+//GET - Obtener tags de un post
+const getPostTags = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id).populate('tags', 'name');
+
+    if (!post) {
+      return res.status(404).json({ error: 'Post no encontrado' });
+    }
+
+    res.status(200).json(post.tags);
+  } catch (error) {
+    console.error('Error al obtener tags del post:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+//POST - Agregar tag a un post
+const addTagToPost = async (req, res) => {
+  try {
+    const { id: postId, tagId } = req.params;
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ error: 'Post no encontrado' });
+    }
+
+    const tag = await Tag.findById(tagId);
+    if (!tag) {
+      return res.status(404).json({ error: 'Tag no encontrado' });
+    }
+
+    if (post.tags.includes(tagId)) {
+      return res.status(400).json({ error: 'El tag ya está asociado al post' });
+    }
+
+    post.tags.push(tagId);
+    await post.save();
+
+    // Invalidar cachés
+    await Promise.all([
+      invalidatePostCache(postId),
+      invalidatePostsListCache()
+    ]);
+
+    const populatedPost = await getPostWithPopulatedData(post._id);
+
+    res.status(200).json(populatedPost);
+  } catch (error) {
+    console.error('Error al agregar tag al post:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+//DELETE - Remover tag de un post
+const removeTagFromPost = async (req, res) => {
+  try {
+    const { id: postId, tagId } = req.params;
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ error: 'Post no encontrado' });
+    }
+
+    const tagIndex = post.tags.indexOf(tagId);
+    if (tagIndex === -1) {
+      return res.status(404).json({ error: 'El tag no está asociado al post' });
+    }
+
+    post.tags.splice(tagIndex, 1);
+    await post.save();
+
+    // Invalidar cachés
+    await Promise.all([
+      invalidatePostCache(postId),
+      invalidatePostsListCache()
+    ]);
+
+    const populatedPost = await getPostWithPopulatedData(post._id);
+
+    res.status(200).json(populatedPost);
+  } catch (error) {
+    console.error('Error al remover tag del post:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+module.exports = {
+  getAllPosts,
+  getPostById,
+  createPost,
+  updatePost,
+  deletePost,
+  getPostTags,
+  addTagToPost,
+  removeTagFromPost
 };

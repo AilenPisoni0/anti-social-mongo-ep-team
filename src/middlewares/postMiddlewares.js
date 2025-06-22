@@ -1,6 +1,8 @@
 const PostImage = require('../db/models/postImage');
 const Comment = require('../db/models/comment');
 const Post = require('../db/models/post');
+const { invalidatePostCache, invalidateCommentsCache, invalidatePostsListCache } = require('../utils/cacheUtils');
+const { redisClient } = require('../db/config/redisClient');
 
 // Middleware para validar que un post existe
 const validatePostExists = async (req, res, next) => {
@@ -25,8 +27,6 @@ const validatePostExists = async (req, res, next) => {
 };
 
 // Middleware para eliminar post con efecto cascada
-// IMPORTANTE: Los tags NO se eliminan al eliminar un post, solo se remueven las relaciones.
-// Los tags son entidades independientes que pueden ser reutilizados.
 const deletePostWithCascade = async (req, res, next) => {
     try {
         const postId = req.params.id;
@@ -42,8 +42,14 @@ const deletePostWithCascade = async (req, res, next) => {
             Comment.deleteMany({ postId })
         ]);
 
-        // NOTA: Los tags NO se eliminan, solo se remueven las relaciones automáticamente
-        // al eliminar el post, ya que están referenciados en el array del post
+        // Eliminar el post en sí
+        await Post.findByIdAndDelete(postId);
+
+        // Invalidar cachés relacionadas
+        await invalidatePostCache(postId.toString());
+        await redisClient.del(`comments:post:${postId}`);
+        await invalidatePostsListCache();
+        await invalidateCommentsCache();
 
         req.postToDelete = post;
         next();
@@ -64,10 +70,12 @@ const deleteUserWithCascade = async (req, res, next) => {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
-        const userPosts = await Post.find({ userId });
-        const postIds = userPosts.map(post => post._id);
+        const userComments = await Comment.find({ userId });
+        const postsWithUserComments = [...new Set(userComments.map(c => c.postId.toString()))];
 
-        // Eliminar todos los elementos asociados al usuario
+        const userPosts = await Post.find({ userId });
+        const postIds = userPosts.map(post => post._id.toString());
+
         await Promise.all([
             PostImage.deleteMany({ postId: { $in: postIds } }),
             Comment.deleteMany({ postId: { $in: postIds } }),
@@ -75,7 +83,13 @@ const deleteUserWithCascade = async (req, res, next) => {
             Post.deleteMany({ userId })
         ]);
 
-        // NOTA: Los tags NO se eliminan, solo se remueven las relaciones
+        const allPostsToInvalidate = new Set([...postsWithUserComments, ...postIds]);
+        for (const postId of allPostsToInvalidate) {
+            await invalidatePostCache(postId);
+            await redisClient.del(`comments:post:${postId}`);
+        }
+        await invalidatePostsListCache();
+        await invalidateCommentsCache();
 
         req.userToDelete = user;
         next();

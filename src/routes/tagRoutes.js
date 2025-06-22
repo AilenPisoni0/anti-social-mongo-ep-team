@@ -20,7 +20,7 @@ router.get('/:id',
 
 router.put('/:id',
     genericMiddleware.validateMongoId,
-    genericMiddleware.createEntityExistsValidator(Tag, 'Tag'),
+    tagMiddleware.updateTagWithCache,
     tagMiddleware.existTagByName(),
     genericMiddleware.schemaValidator(UpdateTagSchema),
     tagController.updateTag
@@ -28,7 +28,7 @@ router.put('/:id',
 
 router.delete('/:id',
     genericMiddleware.validateMongoId,
-    genericMiddleware.createEntityExistsValidator(Tag, 'Tag'),
+    tagMiddleware.deleteTagWithCache,
     tagController.deleteTag
 );
 
