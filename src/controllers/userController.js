@@ -50,7 +50,7 @@ module.exports = {
         return users.length === 0 ? res.status(204).send() : res.status(200).json(users);
       }
 
-      const users = await User.find({}, 'nickName email createdAt updatedAt').lean();
+      const users = await User.find({}, 'nickName email createdAt updatedAt');
 
       if (users.length === 0) {
         return res.status(204).send();

@@ -16,7 +16,7 @@ module.exports = {
         try {
             const { id: postId } = req.params;
 
-            const images = await PostImage.find({ postId }).lean();
+            const images = await PostImage.find({ postId });
 
             if (images.length === 0) {
                 return res.status(204).send();

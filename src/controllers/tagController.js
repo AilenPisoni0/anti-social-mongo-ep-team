@@ -41,7 +41,7 @@ module.exports = {
         return tags.length === 0 ? res.status(204).send() : res.status(200).json(tags);
       }
 
-      const tags = await Tag.find({}, 'id name').lean();
+      const tags = await Tag.find({}, 'id name');
 
       if (tags.length === 0) {
         return res.status(204).send();
@@ -66,7 +66,7 @@ module.exports = {
         return res.status(200).json(JSON.parse(cached));
       }
 
-      const tag = await Tag.findById(id).lean();
+      const tag = await Tag.findById(id);
 
       if (!tag) {
         return res.status(404).json({ error: 'Tag no encontrado' });

@@ -9,11 +9,9 @@ const { validateId, validateEntityExists } = require('../utils/entityValidation'
 const schemaValidator = (schema) => {
     return (req, res, next) => {
         const { isValid, errors } = validateSchema(schema, req.body);
-
         if (!isValid) {
             return res.status(400).json({ errors });
         }
-
         next();
     };
 };

@@ -38,7 +38,7 @@ router.get('/:id',
 router.put('/:id',
   genericMiddleware.validateMongoId,
   genericMiddleware.createEntityExistsValidator(Comment, 'Comentario'),
-  commentMiddleware.validateUpdateFields,
+  commentMiddleware.validateUpdateFields(),
   genericMiddleware.schemaValidator(CommentUpdateSchema),
   commentController.updateComment
 );

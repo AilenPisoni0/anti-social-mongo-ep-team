@@ -1,5 +1,3 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/NImNxoFn)
-
 # Anti-Social Network API
 
 API REST para una red social antisocial. Desarrollada con Node.js, Express y MongoDB.
@@ -26,7 +24,7 @@ npm start
 
 ## Configuración
 
-- **Puerto del servidor**: Configurado mediante variable de entorno `PORT` (por defecto: 3001)
+- **Puerto del servidor**: Configurado mediante variable de entorno `PORT` (por defecto: 3000)
 - **Base de datos MongoDB**: Configurada mediante variable de entorno `MONGO_URI`
 - **Redis**: Configurado mediante variable de entorno `REDIS_URL` (por defecto: redis://localhost:6379)
 - **Filtrado de comentarios**: Configurado mediante variable de entorno `MAX_COMMENT_AGE_MONTHS` (por defecto: 6 meses)
@@ -170,7 +168,7 @@ npm start
 La API corre por defecto en:
 
 ```
-http://localhost:3001
+http://localhost:3000
 ```
 
 ## Características
@@ -246,7 +244,7 @@ La documentación interactiva de la API está disponible a través de Swagger UI
 
 2. Accede a la documentación en tu navegador:
    ```
-   http://localhost:3001/api-docs/
+   http://localhost:3000/api-docs/
    ```
 
 ### Características de la documentación:
@@ -351,7 +349,7 @@ npm run seed       # Ejecutar seeders para crear datos de prueba
 
 ### ¿Cómo modelar que un usuario pueda "seguir" a otros usuarios y ser seguido por muchos? (Followers)
 
-Para implementar la funcionalidad de seguidores (followers) en MongoDB, se recomienda agregar campos de referencia en el modelo de usuario:
+Para implementar la funcionalidad de seguidores en MongoDB, podríamos agregar campos de referencia en el modelo de usuario:
 
 - **followers:** Array de ObjectId de usuarios que siguen a este usuario.
 - **following:** Array de ObjectId de usuarios a los que este usuario sigue.
@@ -370,9 +368,9 @@ const userSchema = new mongoose.Schema({
 Esto permite:
 - Consultar fácilmente los seguidores y seguidos de un usuario.
 - Implementar endpoints como `/users/:id/followers` y `/users/:id/following`.
-- Agregar o quitar seguidores de manera eficiente usando operadores de MongoDB (`$addToSet`, `$pull`).
+- Agregar o sacar seguidores de manera eficiente usando operadores de MongoDB (`$addToSet`, `$pull`).
 
-### Estrategia para optimizar el acceso a información de posts que no varía frecuentemente
+### Como la información de los post no varía muy seguido ¿Qué estrategias podrían utilizar para que la información no sea constantemente consultada desde la base de datos?
 
 Para optimizar las consultas a posts que no varían frecuentemente, podemos implementar una estrategia de caché usando Redis.
 

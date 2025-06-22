@@ -30,8 +30,7 @@ const getPostWithPopulatedData = async (postId) => {
         path: 'userId',
         select: 'nickName'
       }
-    })
-    .lean();
+    });
 };
 
 // Helper para obtener múltiples posts con formato unificado
@@ -51,8 +50,7 @@ const getPostsWithPopulatedData = async () => {
         select: 'nickName'
       }
     })
-    .sort({ createdAt: -1 })
-    .lean();
+    .sort({ createdAt: -1 });
 };
 
 module.exports = {
@@ -249,7 +247,7 @@ module.exports = {
     try {
       const { id: postId } = req.params;
 
-      const post = await Post.findById(postId).populate('tags', 'name').lean();
+      const post = await Post.findById(postId).populate('tags', 'name');
 
       if (!post) {
         return res.status(404).json({ error: 'Post no encontrado' });

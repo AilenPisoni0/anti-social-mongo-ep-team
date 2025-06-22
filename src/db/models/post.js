@@ -43,7 +43,21 @@ postSchema.virtual('postImages', {
   foreignField: 'postId'
 });
 
-postSchema.set('toJSON', { virtuals: true });
-postSchema.set('toObject', { virtuals: true });
+postSchema.set('toJSON', {
+  virtuals: true,
+  transform: (_, ret) => {
+    ret.id = ret._id;
+    delete ret._id;
+    delete ret.__v;
+  }
+});
+postSchema.set('toObject', {
+  virtuals: true,
+  transform: (_, ret) => {
+    ret.id = ret._id;
+    delete ret._id;
+    delete ret.__v;
+  }
+});
 
 module.exports = mongoose.model('Post', postSchema);

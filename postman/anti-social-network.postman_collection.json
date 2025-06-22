@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "405e632d-ae01-4fd4-b391-40816b6d534d",
+		"_postman_id": "b4fae41c-d3e7-4d49-8203-3688ce46668b",
 		"name": "Anti-Social Network API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
 		"_exporter_id": "16085470"
@@ -57,7 +57,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"john.updated@example.com\"\n}"
+							"raw": "{\n    \"email\": \"usuario1-update@example.com\"\n}"
 						},
 						"url": "{{base_url}}/users/{{user_id}}"
 					},
@@ -337,7 +337,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"lifestyle-actualizado\"\n}"
+							"raw": "{\n    \"name\": \"gatitos-actualizado\"\n}"
 						},
 						"url": "{{base_url}}/tags/{{tag_id}}"
 					},
@@ -353,38 +353,6 @@
 					"response": []
 				}
 			]
-		}
-	],
-	"variable": [
-		{
-			"key": "base_url",
-			"value": "http://localhost:3001",
-			"type": "string"
-		},
-		{
-			"key": "user_id",
-			"value": "REEMPLAZAR_CON_USER_ID_REAL",
-			"type": "string"
-		},
-		{
-			"key": "post_id",
-			"value": "REEMPLAZAR_CON_POST_ID_REAL",
-			"type": "string"
-		},
-		{
-			"key": "tag_id",
-			"value": "REEMPLAZAR_CON_TAG_ID_REAL",
-			"type": "string"
-		},
-		{
-			"key": "comment_id",
-			"value": "REEMPLAZAR_CON_COMMENT_ID_REAL",
-			"type": "string"
-		},
-		{
-			"key": "image_id",
-			"value": "REEMPLAZAR_CON_IMAGE_ID_REAL",
-			"type": "string"
 		}
 	]
 }
