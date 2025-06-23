@@ -168,7 +168,7 @@ http://localhost:3000
   "description": "Mi primer post en la red antisocial!",
   "userId": "6856ea88be5012c571952977",
   "tags": ["6856ea88be5012c57195297d"],
-  "imagenes": ["https://ejemplo.com/imagen1.jpg"]
+  "images": ["https://ejemplo.com/imagen1.jpg"]
 }
 ```
 

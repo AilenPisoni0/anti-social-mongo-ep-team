@@ -26,7 +26,7 @@
  *             type: string
  *           description: Array de IDs de tags asociados al post
  *           example: ["507f1f77bcf86cd799439013", "507f1f77bcf86cd799439014"]
- *         imagenes:
+ *         images:
  *           type: array
  *           items:
  *             type: string
@@ -103,7 +103,7 @@
  *             type: string
  *           description: Array de IDs de tags para asociar al post
  *           example: ["507f1f77bcf86cd799439013", "507f1f77bcf86cd799439014"]
- *         imagenes:
+ *         images:
  *           type: array
  *           items:
  *             type: string
@@ -127,7 +127,7 @@
  *             type: string
  *           description: Nuevo array de IDs de tags para el post
  *           example: ["507f1f77bcf86cd799439013", "507f1f77bcf86cd799439014"]
- *         imagenes:
+ *         images:
  *           type: array
  *           items:
  *             type: string

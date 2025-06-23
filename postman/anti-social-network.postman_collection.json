@@ -98,7 +98,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"description\": \"Mi primer post en la red antisocial!\",\n    \"userId\": \"{{user_id}}\",\n    \"tags\": [\"{{tag_id}}\"],\n    \"imagenes\": [\"https://ejemplo.com/imagen1.jpg\"]\n}"
+							"raw": "{\n    \"description\": \"Mi primer post en la red antisocial!\",\n    \"userId\": \"{{user_id}}\",\n    \"tags\": [\"{{tag_id}}\"],\n    \"images\": [\"https://ejemplo.com/imagen1.jpg\"]\n}"
 						},
 						"url": "{{base_url}}/posts"
 					},

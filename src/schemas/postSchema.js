@@ -19,7 +19,7 @@ const createPostSchema = Joi.object({
     "string.length": "El ID de cada tag debe tener 24 caracteres",
     "string.hex": "El ID de cada tag debe ser un hexadecimal válido"
   }),
-  imagenes: Joi.array().items(
+  images: Joi.array().items(
     Joi.string().uri()
   ).max(5).optional().messages({
     "array.base": "Las imágenes deben proporcionarse como un array de URLs",
@@ -45,7 +45,7 @@ const updatePostSchema = Joi.object({
     "string.length": "El ID de cada tag debe tener 24 caracteres",
     "string.hex": "El ID de cada tag debe ser un hexadecimal válido"
   }),
-  imagenes: Joi.array().items(
+  images: Joi.array().items(
     Joi.string().uri()
   ).max(5).optional().messages({
     "array.base": "Las imágenes deben proporcionarse como un array de URLs",
